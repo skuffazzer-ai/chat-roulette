@@ -19,16 +19,17 @@ const muteMicBtn = document.getElementById("muteMicBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// Скрываем кнопки до старта
-[stopBtn, nextBtn, flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(b => b.style.display = "none");
-
 // ======== Start ========
 startBtn.onclick = async () => {
-  startBtn.style.display = "none";
-  stopBtn.style.display = "inline-block";
-  nextBtn.style.display = "inline-block";
-
-  [flipBtn, muteMicBtn, reportBtn, giftBtn, likeBtn, muteBtn].forEach(b => b.style.display = "inline-block");
+  startBtn.style.visibility = "hidden";
+  stopBtn.classList.add("visible");
+  nextBtn.classList.add("visible");
+  flipBtn.classList.add("visible");
+  muteMicBtn.classList.add("visible");
+  reportBtn.classList.add("visible");
+  giftBtn.classList.add("visible");
+  likeBtn.classList.add("visible");
+  muteBtn.classList.add("visible");
 
   localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
   localVideo.srcObject = localStream;
@@ -54,11 +55,15 @@ startBtn.onclick = async () => {
 // ======== Stop ========
 stopBtn.onclick = stopCall;
 function stopCall() {
-  stopBtn.style.display = "none";
-  nextBtn.style.display = "none";
-  [flipBtn, muteMicBtn, reportBtn, giftBtn, likeBtn, muteBtn].forEach(b => b.style.display = "none");
-
-  startBtn.style.display = "inline-block";
+  stopBtn.classList.remove("visible");
+  nextBtn.classList.remove("visible");
+  flipBtn.classList.remove("visible");
+  muteMicBtn.classList.remove("visible");
+  reportBtn.classList.remove("visible");
+  giftBtn.classList.remove("visible");
+  likeBtn.classList.remove("visible");
+  muteBtn.classList.remove("visible");
+  startBtn.style.visibility = "visible";
 
   if(peer){ peer.close(); peer=null; }
   if(socket){ socket.close(); socket=null; }
@@ -112,14 +117,8 @@ flipBtn.onclick = async () => {
       if(sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
     }
     usingFrontCamera = !usingFrontCamera;
-  } catch(err){ console.error("Ошибка переключения камеры:", err); }
+  } catch(err){ console.error(err); }
 };
-
-// ======== Остальные кнопки ========
-reportBtn.onclick = () => console.log("Жалоба нажата");
-giftBtn.onclick = () => console.log("Подарок нажата");
-likeBtn.onclick = () => console.log("Лайк нажата");
-muteBtn.onclick = () => console.log("Мут собеседника");
 
 // ======== Микрофон ========
 muteMicBtn.onclick = () => {
@@ -128,3 +127,15 @@ muteMicBtn.onclick = () => {
   track.enabled = !track.enabled;
   muteMicBtn.textContent = track.enabled ? "🎤" : "🔇";
 };
+
+// ======== Мут собеседника ========
+muteBtn.onclick = () => {
+  if(!remoteVideo.srcObject) return;
+  remoteVideo.muted = !remoteVideo.muted;
+  muteBtn.textContent = remoteVideo.muted ? "🔇" : "🔊";
+};
+
+// ======== Остальные кнопки ========
+reportBtn.onclick = () => console.log("Жалоба нажата");
+giftBtn.onclick = () => console.log("Подарок нажата");
+likeBtn.onclick = () => console.log("Лайк нажата");
