@@ -20,14 +20,10 @@ startBtn.onclick = async () => {
 
   // Получаем локальное видео
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-  // Фиксируем размер окна, видео масштабируется внутри блока
   localVideo.srcObject = localStream;
 
   // Подключение к серверу
-  socket = new WebSocket(
-    location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`
-  );
+  socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
 
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
@@ -58,18 +54,14 @@ startBtn.onclick = async () => {
 function createPeer(isCaller) {
   peer = new RTCPeerConnection(config);
 
-  // Добавляем локальные треки
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
 
-  // Получаем удаленный поток
   peer.ontrack = (e) => remoteVideo.srcObject = e.streams[0];
 
-  // ICE кандидаты
   peer.onicecandidate = (e) => {
     if (e.candidate) socket.send(JSON.stringify({ candidate: e.candidate }));
   };
 
-  // Если мы вызываем, создаем offer
   if (isCaller) {
     peer.createOffer().then(offer => {
       peer.setLocalDescription(offer);
@@ -78,7 +70,7 @@ function createPeer(isCaller) {
   }
 }
 
-// ======== Текстовый чат ========
+// ======== Чат ========
 function appendMessage(sender, text){
   const div = document.createElement("div");
   div.className = "chat-message";
@@ -112,3 +104,18 @@ function stop(){
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
 }
+
+// ======== Pull-to-refresh для мобильных ========
+let touchStartY = 0;
+document.addEventListener('touchstart', e => {
+  if(e.touches.length === 1) touchStartY = e.touches[0].clientY;
+});
+
+document.addEventListener('touchmove', e => {
+  if(e.touches.length === 1){
+    const touchEndY = e.touches[0].clientY;
+    if(touchEndY - touchStartY > 100) { // свайп вниз > 100px
+      location.reload();
+    }
+  }
+});
