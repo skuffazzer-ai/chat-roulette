@@ -11,11 +11,10 @@ const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
 
 // Инициализация локального потока
 async function initLocalStream() {
+  if (localStream) return;
   try {
-    if (!localStream) {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      localVideo.srcObject = localStream;
-    }
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localVideo.srcObject = localStream;
   } catch (err) {
     console.error('Ошибка доступа к камере/микрофону:', err);
     alert('Разрешите доступ к камере и микрофону');
@@ -24,51 +23,38 @@ async function initLocalStream() {
 
 // Создание PeerConnection
 function createPeerConnection() {
-  if (peerConnection) return; // не создаём заново
+  if (peerConnection) return;
 
   peerConnection = new RTCPeerConnection(configuration);
 
-  // Получение потока собеседника
   peerConnection.ontrack = (event) => {
     remoteVideo.srcObject = event.streams[0];
   };
 
-  // ICE-кандидаты
   peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      socket.emit('ice-candidate', event.candidate);
-    }
+    if (event.candidate) socket.emit('ice-candidate', event.candidate);
   };
 
-  // Добавляем локальные треки
   if (localStream) {
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
   }
 }
 
-// Начало звонка (инициатор)
+// Начало звонка (для инициатора)
 async function startCall() {
+  isCaller = true;
   await initLocalStream();
   createPeerConnection();
-  isCaller = true;
 
   const offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
   socket.emit('offer', offer);
 }
 
-// Когда другой пользователь присоединился
-socket.on('user-joined', async () => {
-  if (!peerConnection && !isCaller) {
-    await initLocalStream();
-    createPeerConnection();
-  }
-});
-
-// Приход offer
+// Когда приходит offer (второй пользователь)
 socket.on('offer', async (offer) => {
-  await initLocalStream();
-  createPeerConnection();
+  await initLocalStream();      // включаем камеру второго пользователя
+  createPeerConnection();        // создаём PeerConnection
 
   await peerConnection.setRemoteDescription(offer);
   const answer = await peerConnection.createAnswer();
@@ -76,7 +62,7 @@ socket.on('offer', async (offer) => {
   socket.emit('answer', answer);
 });
 
-// Приход answer
+// Когда приходит answer (инициатор)
 socket.on('answer', async (answer) => {
   if (peerConnection) await peerConnection.setRemoteDescription(answer);
 });
@@ -92,5 +78,5 @@ socket.on('ice-candidate', async (candidate) => {
   }
 });
 
-// Кнопка "Начать"
+// Кнопка для первого пользователя
 startButton.addEventListener('click', startCall);
