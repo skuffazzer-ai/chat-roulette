@@ -24,55 +24,44 @@ const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Камера ========
+// ===== Камера =====
 async function getCameraStream() {
-  if(localStream) localStream.getTracks().forEach(t => t.stop());
-
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: usingFrontCamera ? "user" : "environment" },
-    audio: true
-  });
+  if(localStream) localStream.getTracks().forEach(t=>t.stop());
+  localStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:usingFrontCamera?"user":"environment"},audio:true});
   localVideo.srcObject = localStream;
 
   if(peer){
-    const sender = peer.getSenders().find(s => s.track.kind === 'video');
+    const sender = peer.getSenders().find(s => s.track.kind==='video');
     if(sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
   }
 }
 
-// Показ кнопок после Start
+// ===== Кнопки =====
 function showCallButtons(show){
   [flipBtn, micBtn, stopBtn, nextBtn, likeBtn, reportBtn, muteBtn, giftBtn].forEach(b => b.style.display = show ? "block" : "none");
   startBtn.style.display = show ? "none" : "block";
 }
 
-// ======== Start/Stop/Next ========
+// Start/Stop/Next
 startBtn.onclick = async () => {
   showCallButtons(true);
   await getCameraStream();
 
-  socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
-
-  socket.onmessage = async (event) => {
+  socket = new WebSocket(location.protocol==="https:"?`wss://${location.host}`:`ws://${location.host}`);
+  socket.onmessage = async event => {
     const data = JSON.parse(event.data);
-    if(data.type === "match") setTimeout(() => createPeer(data.role === "caller"), 100);
-
+    if(data.type==="match") setTimeout(()=>createPeer(data.role==="caller"),100);
     if(data.sdp && peer){
       await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
-      if(data.sdp.type === "offer"){
+      if(data.sdp.type==="offer"){
         const answer = await peer.createAnswer();
         await peer.setLocalDescription(answer);
-        socket.send(JSON.stringify({ sdp: peer.localDescription }));
+        socket.send(JSON.stringify({sdp:peer.localDescription}));
       }
     }
-
-    if(data.candidate && peer){
-      try { await peer.addIceCandidate(new RTCIceCandidate(data.candidate)); }
-      catch(e){ console.log("Ошибка ICE:", e); }
-    }
-
-    if(data.type === "chat") appendMessage("Собеседник", data.message);
-    if(data.type === "leave") stopCall();
+    if(data.candidate && peer){ try{ peer.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){console.log(e);} }
+    if(data.type==="chat") appendMessage("Собеседник", data.message);
+    if(data.type==="leave") stopCall();
   };
 };
 
@@ -82,51 +71,42 @@ nextBtn.onclick = () => {};
 flipBtn.onclick = () => { usingFrontCamera = !usingFrontCamera; getCameraStream(); };
 
 let micOn = true;
-micBtn.onclick = () => { micOn = !micOn; localStream.getAudioTracks()[0].enabled = micOn; micBtn.textContent = micOn ? "🎤" : "🔇"; };
+micBtn.onclick = () => { micOn = !micOn; localStream.getAudioTracks()[0].enabled = micOn; micBtn.textContent = micOn?"🎤":"🔇"; };
 
 muteBtn.onclick = () => {
-  if(remoteVideo.srcObject){
-    remoteVideo.srcObject.getAudioTracks().forEach(t => t.enabled = !t.enabled);
-  }
+  if(remoteVideo.srcObject) remoteVideo.srcObject.getAudioTracks().forEach(t => t.enabled=!t.enabled);
 };
 
-[likeBtn, reportBtn, giftBtn].forEach(b => b.onclick = () => {});
+[likeBtn, reportBtn, giftBtn].forEach(b => b.onclick = ()=>{});
 
-// ======== Peer ========
+// ===== Peer =====
 function createPeer(isCaller){
   peer = new RTCPeerConnection(config);
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
   peer.ontrack = e => remoteVideo.srcObject = e.streams[0];
-  peer.onicecandidate = e => { if(e.candidate) socket.send(JSON.stringify({ candidate: e.candidate })); };
-
+  peer.onicecandidate = e => { if(e.candidate) socket.send(JSON.stringify({candidate:e.candidate})); };
   if(isCaller){
-    peer.createOffer().then(offer => {
-      peer.setLocalDescription(offer);
-      socket.send(JSON.stringify({ sdp: offer }));
-    });
+    peer.createOffer().then(offer => { peer.setLocalDescription(offer); socket.send(JSON.stringify({sdp:offer})); });
   }
 }
 
-// ======== Чат ========
-function appendMessage(sender, text){
+// ===== Чат =====
+function appendMessage(sender,text){
   const msgDiv = document.createElement("div");
-  msgDiv.className = "chat-message";
-  msgDiv.textContent = `${sender}: ${text}`;
+  msgDiv.className="chat-message";
+  msgDiv.textContent=`${sender}: ${text}`;
 
-  // Добавляем поверх видео, если клавиатура открыта
-  if(document.activeElement === chatInput){
+  if(document.activeElement===chatInput){
     const clone = msgDiv.cloneNode(true);
     chatOverlay.appendChild(clone);
     chatOverlay.scrollTop = chatOverlay.scrollHeight;
 
-    // Через 3 секунды плавно исчезаем
-    setTimeout(() => {
-      clone.style.animation = "floatOut 0.5s forwards";
-      setTimeout(() => clone.remove(), 500);
-    }, 3000);
+    setTimeout(()=>{
+      clone.style.animation="floatOut 0.5s forwards";
+      setTimeout(()=>clone.remove(),500);
+    },3000);
   }
 
-  // Стандартный чат
   chatMessages.appendChild(msgDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -134,37 +114,28 @@ function appendMessage(sender, text){
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
-
-  if(socket) socket.send(JSON.stringify({ type: "chat", message: msg }));
-
+  if(socket) socket.send(JSON.stringify({type:"chat",message:msg}));
   appendMessage("Вы", msg);
-  chatInput.value = "";
+  chatInput.value="";
   chatInput.focus();
 }
 
-// ======== Клавиатура ========
-chatInput.addEventListener("focus", () => {
-  chatOverlay.style.display = "flex";
-});
-
-chatInput.addEventListener("blur", () => {
-  chatOverlay.innerHTML = "";
-  chatOverlay.style.display = "none";
-});
+// ===== Клавиатура =====
+chatInput.addEventListener("focus", ()=>{ chatOverlay.style.display="flex"; });
+chatInput.addEventListener("blur", ()=>{ chatOverlay.innerHTML=""; chatOverlay.style.display="none"; });
 
 sendBtn.onclick = sendMessage;
-chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
+chatInput.addEventListener("keypress", e=>{ if(e.key==="Enter") sendMessage(); });
 
-// ======== Стоп ========
+// ===== Стоп =====
 function stopCall(){
   showCallButtons(false);
-
   if(peer) peer.close();
   if(socket) socket.close();
-  if(localStream) localStream.getTracks().forEach(t => t.stop());
+  if(localStream) localStream.getTracks().forEach(t=>t.stop());
 
-  localVideo.srcObject = null;
-  remoteVideo.srcObject = null;
-  chatMessages.innerHTML = "";
-  chatOverlay.innerHTML = "";
+  localVideo.srcObject=null;
+  remoteVideo.srcObject=null;
+  chatMessages.innerHTML="";
+  chatOverlay.innerHTML="";
 }
