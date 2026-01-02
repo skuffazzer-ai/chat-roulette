@@ -21,6 +21,11 @@ const muteBtn = document.getElementById("muteBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
+// Изначально скрываем flipBtn
+flipBtn.style.display = "none";
+
+let currentFacing = "user"; // фронтальная камера по умолчанию
+
 // ======== Старт звонка ========
 async function startCall() {
   startBtn.disabled = true;
@@ -30,8 +35,11 @@ async function startCall() {
   stopBtn.style.display = "inline-block";
   nextBtn.style.display = "inline-block";
 
+  // Показываем кнопку переворота камеры
+  flipBtn.style.display = "inline-block";
+
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing }, audio: true });
     localVideo.srcObject = localStream;
   } catch (e) {
     console.error("Не удалось получить камеру/микрофон:", e);
@@ -40,6 +48,7 @@ async function startCall() {
     startBtn.style.display = "inline-block";
     stopBtn.style.display = "none";
     nextBtn.style.display = "none";
+    flipBtn.style.display = "none";
     return;
   }
 
@@ -76,6 +85,9 @@ function stopCall() {
   nextBtn.style.display = "none";
   startBtn.style.display = "inline-block";
   startBtn.disabled = false;
+
+  // Скрываем flipBtn при остановке
+  flipBtn.style.display = "none";
 
   if(peer) { peer.close(); peer = null; }
   if(socket) { socket.close(); socket = null; }
@@ -127,7 +139,6 @@ sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
 // ======== Новые кнопки ========
-let currentFacing = "user"; // фронтальная камера по умолчанию
 
 flipBtn.onclick = async () => {
   if (!localStream) return;
@@ -151,6 +162,7 @@ flipBtn.onclick = async () => {
     localVideo.srcObject = null;
     localVideo.srcObject = localStream;
 
+    // Если уже есть Peer, заменяем трек на стороне собеседника
     if (peer) {
       const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
       if (sender) sender.replaceTrack(newVideoTrack);
