@@ -1,103 +1,71 @@
+const socket = io();
+const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
+const startButton = document.getElementById('startButton');
+
 let localStream;
-let peer;
-let socket;
+let peerConnection;
 
-const localVideo = document.getElementById("localVideo");
-const remoteVideo = document.getElementById("remoteVideo");
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
+const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-const config = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-};
-
-startBtn.onclick = async () => {
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
-
-  // ⬇️ ЯВНО запрашиваем и видео и звук
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: true
-  });
-
+// Получаем локальный поток (видео + аудио)
+async function initLocalStream() {
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   localVideo.srcObject = localStream;
+}
 
-  socket = new WebSocket(
-    location.protocol === "https:"
-      ? `wss://${location.host}`
-      : `ws://${location.host}`
-  );
+// Создаём PeerConnection
+function createPeerConnection() {
+  peerConnection = new RTCPeerConnection(configuration);
 
-  socket.onmessage = async (event) => {
-    const data = JSON.parse(event.data);
-
-    if (data.type === "match") {
-      createPeer(data.role === "caller");
-    }
-
-    if (data.sdp) {
-      await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
-      if (data.sdp.type === "offer") {
-        const answer = await peer.createAnswer();
-        await peer.setLocalDescription(answer);
-        socket.send(JSON.stringify({ sdp: peer.localDescription }));
-      }
-    }
-
-    if (data.candidate) {
-      await peer.addIceCandidate(new RTCIceCandidate(data.candidate));
-    }
-
-    if (data.type === "leave") {
-      stop();
-    }
-  };
-};
-
-function createPeer(isCaller) {
-  peer = new RTCPeerConnection(config);
-
-  // ⬇️ ДОБАВЛЯЕМ ВСЕ ТРЕКИ (включая звук!)
-  localStream.getTracks().forEach(track => {
-    peer.addTrack(track, localStream);
-  });
-
-  peer.ontrack = (event) => {
+  // Когда приходит поток от собеседника
+  peerConnection.ontrack = (event) => {
     remoteVideo.srcObject = event.streams[0];
-
-    // 🔊 КЛЮЧЕВОЙ МОМЕНТ
-    remoteVideo.muted = false;
-    remoteVideo.volume = 1.0;
-
-    // иногда нужно явно запустить
-    remoteVideo.play().catch(() => {});
   };
 
-  peer.onicecandidate = (event) => {
+  // ICE-кандидаты
+  peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
-      socket.send(JSON.stringify({ candidate: event.candidate }));
+      socket.emit('ice-candidate', event.candidate);
     }
   };
+
+  // Добавляем локальные треки
+  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+}
+
+// Начало звонка
+async function startCall(isCaller) {
+  await initLocalStream();
+  createPeerConnection();
 
   if (isCaller) {
-    peer.createOffer().then(offer => {
-      peer.setLocalDescription(offer);
-      socket.send(JSON.stringify({ sdp: offer }));
-    });
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    socket.emit('offer', offer);
   }
 }
 
-stopBtn.onclick = stop;
+// Сигнальный сервер
+socket.on('offer', async (offer) => {
+  await createPeerConnection();
+  await peerConnection.setRemoteDescription(offer);
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  socket.emit('answer', answer);
+});
 
-function stop() {
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
+socket.on('answer', async (answer) => {
+  await peerConnection.setRemoteDescription(answer);
+});
 
-  if (peer) peer.close();
-  if (socket) socket.close();
-  if (localStream) localStream.getTracks().forEach(t => t.stop());
+socket.on('ice-candidate', async (candidate) => {
+  try {
+    await peerConnection.addIceCandidate(candidate);
+  } catch (err) {
+    console.error('Ошибка добавления ICE-кандидата', err);
+  }
+});
 
-  localVideo.srcObject = null;
-  remoteVideo.srcObject = null;
-}
+// Кнопка "Начать" (инициатор звонка)
+startButton.addEventListener('click', () => startCall(true));
