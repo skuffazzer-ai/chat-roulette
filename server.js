@@ -5,38 +5,34 @@ const io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-let readyUsers = [];
+let users = [];
 
 io.on('connection', socket => {
   console.log('Подключился:', socket.id);
 
-  socket.on('ready', () => {
-    if (!readyUsers.includes(socket.id)) {
-      readyUsers.push(socket.id);
-    }
+  users.push(socket.id);
 
-    if (readyUsers.length === 2) {
-      io.to(readyUsers[0]).emit('initiate-call', true);
-      io.to(readyUsers[1]).emit('initiate-call', false);
-    }
+  if (users.length === 2) {
+    io.to(users[0]).emit('role', 'caller');
+    io.to(users[1]).emit('role', 'callee');
+  }
+
+  socket.on('offer', offer => {
+    socket.to(users.find(id => id !== socket.id)).emit('offer', offer);
   });
 
-  socket.on('offer', data => {
-    socket.broadcast.emit('offer', data);
+  socket.on('answer', answer => {
+    socket.to(users.find(id => id !== socket.id)).emit('answer', answer);
   });
 
-  socket.on('answer', data => {
-    socket.broadcast.emit('answer', data);
-  });
-
-  socket.on('ice-candidate', data => {
-    socket.broadcast.emit('ice-candidate', data);
+  socket.on('ice-candidate', candidate => {
+    socket.to(users.find(id => id !== socket.id)).emit('ice-candidate', candidate);
   });
 
   socket.on('disconnect', () => {
-    readyUsers = readyUsers.filter(id => id !== socket.id);
+    users = users.filter(id => id !== socket.id);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log('Server running on port', PORT));
+http.listen(PORT, () => console.log('Server running on', PORT));
