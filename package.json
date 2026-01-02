@@ -1,7 +1,6 @@
 {
   "name": "chat-roulette",
   "version": "1.0.0",
-  "description": "Видеочат-рулетка для двух пользователей на Render",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
