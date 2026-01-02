@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat Roulette</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Видео чат-рулетка</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -10,7 +11,10 @@
 <h1>Видео чат-рулетка</h1>
 
 <div class="videos">
-  <video id="localVideo" autoplay muted playsinline></video>
+  <!-- muted ТОЛЬКО у локального видео -->
+  <video id="localVideo" autoplay playsinline muted></video>
+
+  <!-- remoteVideo НЕ muted -->
   <video id="remoteVideo" autoplay playsinline></video>
 </div>
 
