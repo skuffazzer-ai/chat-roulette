@@ -5,36 +5,42 @@ const io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-let room = [];
+let users = [];
+let ready = [];
 
 io.on('connection', socket => {
   console.log('Connected:', socket.id);
+  users.push(socket.id);
 
-  if (room.length < 2) {
-    room.push(socket.id);
-  }
+  socket.on('ready', () => {
+    if (!ready.includes(socket.id)) {
+      ready.push(socket.id);
+    }
 
-  if (room.length === 2) {
-    io.to(room[0]).emit('role', 'caller');
-    io.to(room[1]).emit('role', 'callee');
-  }
+    // ТОЛЬКО когда ОБА нажали кнопку
+    if (ready.length === 2) {
+      io.to(ready[0]).emit('role', 'caller');
+      io.to(ready[1]).emit('role', 'callee');
+    }
+  });
 
   socket.on('offer', offer => {
-    socket.to(room.find(id => id !== socket.id)).emit('offer', offer);
+    socket.to(users.find(id => id !== socket.id)).emit('offer', offer);
   });
 
   socket.on('answer', answer => {
-    socket.to(room.find(id => id !== socket.id)).emit('answer', answer);
+    socket.to(users.find(id => id !== socket.id)).emit('answer', answer);
   });
 
   socket.on('ice-candidate', candidate => {
-    socket.to(room.find(id => id !== socket.id)).emit('ice-candidate', candidate);
+    socket.to(users.find(id => id !== socket.id)).emit('ice-candidate', candidate);
   });
 
   socket.on('disconnect', () => {
-    room = room.filter(id => id !== socket.id);
+    users = users.filter(id => id !== socket.id);
+    ready = ready.filter(id => id !== socket.id);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log('Railway server running on', PORT));
+http.listen(PORT, () => console.log('Railway server running'));
