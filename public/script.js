@@ -40,18 +40,22 @@ async function getCameraStream() {
   }
 }
 
+function showCallButtons(show){
+  flipBtn.style.display = show ? "block" : "none";
+  micBtn.style.display = show ? "block" : "none";
+
+  likeBtn.style.display = show ? "block" : "none";
+  reportBtn.style.display = show ? "block" : "none";
+  muteBtn.style.display = show ? "block" : "none";
+  giftBtn.style.display = show ? "block" : "none";
+}
+
 startBtn.onclick = async () => {
   startBtn.style.display = "none";
   stopBtn.style.display = "block";
   nextBtn.style.display = "block";
 
-  flipBtn.style.display = "block";
-  micBtn.style.display = "block";
-
-  likeBtn.style.display = "block";
-  reportBtn.style.display = "block";
-  muteBtn.style.display = "block";
-  giftBtn.style.display = "block";
+  showCallButtons(true);
 
   await getCameraStream();
 
@@ -83,7 +87,7 @@ startBtn.onclick = async () => {
 };
 
 stopBtn.onclick = stopCall;
-nextBtn.onclick = () => {}; // пока просто нажимается
+nextBtn.onclick = () => {}; // просто нажимается
 
 flipBtn.onclick = () => {
   usingFrontCamera = !usingFrontCamera;
@@ -147,13 +151,7 @@ function stopCall(){
   stopBtn.style.display = "none";
   nextBtn.style.display = "none";
 
-  flipBtn.style.display = "none";
-  micBtn.style.display = "none";
-
-  likeBtn.style.display = "none";
-  reportBtn.style.display = "none";
-  muteBtn.style.display = "none";
-  giftBtn.style.display = "none";
+  showCallButtons(false);
 
   if(peer) peer.close();
   if(socket) socket.close();
