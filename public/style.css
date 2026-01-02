@@ -30,7 +30,7 @@ body, html {
   object-fit: cover;
 }
 
-/* Кнопки внутри своих видео */
+/* Кнопки внутри видео */
 .local-video-wrapper button, .remote-video-wrapper button {
   position: absolute;
   padding: 5px 8px;
@@ -50,7 +50,7 @@ body, html {
 /* Моя камера */
 #flipBtn { top: 5px; right: 5px; }
 #micBtn { top: 50px; right: 5px; }
-#startBtn { bottom: 5px; right: 5px; display: block; } /* видна сразу */
+#startBtn { bottom: 5px; right: 5px; display: block; }
 #stopBtn { bottom: 5px; right: 5px; }
 #nextBtn { bottom: 5px; right: 70px; }
 
@@ -60,6 +60,37 @@ body, html {
 #muteBtn { top: 50px; right: 5px; }
 #giftBtn { bottom: 5px; left: 5px; }
 
+/* Чат прозрачный поверх видео */
+.chat-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.chat-messages-overlay {
+  position: absolute;
+  bottom: 60px;
+  width: 100%;
+  max-height: 40%;
+  overflow-y: auto;
+  padding: 5px;
+  box-sizing: border-box;
+  background: rgba(0,0,0,0.4);
+  border-radius: 5px;
+  pointer-events: auto;
+  display: none; /* показываем только при открытой клавиатуре */
+}
+
+.chat-message {
+  margin: 2px 0;
+  color: white;
+  font-size: 14px;
+}
+
+/* Стандартный чат-блок */
 .chat-container {
   height: 40vh;
   background: #222;
@@ -68,25 +99,17 @@ body, html {
   overflow: hidden;
 }
 
-.chat-messages {
-  height: 100%;
-  overflow-y: auto;
-  padding: 5px;
-  border: 1px solid #555;
-  border-radius: 5px;
-}
-
-.chat-message { margin: 2px 0; }
-
+/* Поле ввода */
 .chat-input-fixed {
-  position: fixed;
-  bottom: env(safe-area-inset-bottom, 0);
+  position: absolute;
+  bottom: 0;
   left: 0;
   width: 100%;
   display: flex;
-  background: #222;
+  background: rgba(0,0,0,0.4);
   padding: 5px;
   box-sizing: border-box;
+  pointer-events: auto;
 }
 
 .chat-input-fixed input {
@@ -95,15 +118,17 @@ body, html {
   border-radius: 5px 0 0 5px;
   border: none;
   outline: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
 }
 
 .chat-input-fixed button {
   padding: 8px 15px;
   border: none;
-  background: #555;
+  background: rgba(85,85,85,0.8);
   color: white;
   border-radius: 0 5px 5px 0;
   cursor: pointer;
 }
 
-.chat-input-fixed button:hover { background: #777; }
+.chat-input-fixed button:hover { background: rgba(119,119,119,0.8); }
