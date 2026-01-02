@@ -6,6 +6,7 @@ const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const startBtn = document.getElementById("startBtn");
 const stopBtn = document.getElementById("stopBtn");
+const nextBtn = document.getElementById("nextBtn");
 
 const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
@@ -13,7 +14,6 @@ const sendBtn = document.getElementById("sendBtn");
 
 // Новые кнопки
 const flipBtn = document.getElementById("flipBtn");
-const nextBtn = document.getElementById("nextBtn");
 const reportBtn = document.getElementById("reportBtn");
 const giftBtn = document.getElementById("giftBtn");
 const likeBtn = document.getElementById("likeBtn");
@@ -21,16 +21,17 @@ const muteBtn = document.getElementById("muteBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Видео и WebSocket ========
+// ======== Старт звонка ========
 startBtn.onclick = async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
 
-  // Start / Stop / Next логика
+  // === Кнопки ===
   startBtn.style.display = "none";
   stopBtn.style.display = "inline-block";
   nextBtn.style.display = "inline-block";
 
+  // ====== Дефолтная логика включения камеры и WebSocket ======
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   localVideo.srcObject = localStream;
 
@@ -56,10 +57,28 @@ startBtn.onclick = async () => {
     }
 
     if (data.type === "chat") appendMessage("Собеседник", data.message);
-
-    if (data.type === "leave") stop();
+    if (data.type === "leave") stopCall();
   };
 };
+
+// ======== Stop / Завершить звонок ========
+stopBtn.onclick = stopCall;
+function stopCall() {
+  stopBtn.style.display = "none";
+  nextBtn.style.display = "none";
+  startBtn.style.display = "inline-block";
+
+  if(peer) peer.close();
+  if(socket) socket.close();
+  if(localStream) localStream.getTracks().forEach(t => t.stop());
+
+  localVideo.srcObject = null;
+  remoteVideo.srcObject = null;
+  chatMessages.innerHTML = "";
+}
+
+// ======== Next кнопка (пока просто кликается) ========
+nextBtn.onclick = () => console.log("Следующий нажата");
 
 // ======== Peer ========
 function createPeer(isCaller) {
@@ -96,25 +115,6 @@ function sendMessage(){
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-// ======== Stop кнопка ========
-stopBtn.onclick = () => {
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-
-  // Start / Stop / Next логика
-  stopBtn.style.display = "none";
-  nextBtn.style.display = "none";
-  startBtn.style.display = "inline-block";
-
-  if(peer) peer.close();
-  if(socket) socket.close();
-  if(localStream) localStream.getTracks().forEach(t=>t.stop());
-
-  localVideo.srcObject = null;
-  remoteVideo.srcObject = null;
-  chatMessages.innerHTML = "";
-};
-
 // ======== Новые кнопки – дефолтная логика ========
 flipBtn.onclick = async () => {
   if (!localStream) return;
@@ -126,8 +126,6 @@ flipBtn.onclick = async () => {
     console.log("Камера перевернута");
   }
 };
-
-nextBtn.onclick = () => console.log("Следующий нажато");
 reportBtn.onclick = () => console.log("Жалоба нажата");
 giftBtn.onclick = () => console.log("Подарок нажата");
 likeBtn.onclick = () => console.log("Лайк нажата");
