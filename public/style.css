@@ -31,7 +31,7 @@ body, html {
   object-fit: cover;
 }
 
-/* Кнопки фиксированные в правом верхнем углу локальной камеры */
+/* Кнопки локального видео */
 .controls {
   position: absolute;
   top: 5px;
@@ -42,23 +42,30 @@ body, html {
 }
 
 .controls button {
-  padding: 5px 10px;
-  margin: 2px 0;
-  font-size: 14px;
-  cursor: pointer;
+  background: rgba(255,255,255,0.2);
   border: none;
-  border-radius: 3px;
-  background: #555;
-  color: white;
+  border-radius: 50%;
+  padding: 5px;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.8;
+  margin: 2px 0;
+  transition: opacity 0.2s;
 }
 
-.controls button:hover { background: #777; }
+.controls button:hover { opacity: 1; }
 
-.remote-video-wrapper {
-  width: 50%;
-  margin: 2px;
-}
+/* Перевернуть камеру – верхний правый угол */
+#flipBtn { top: 5px; right: 5px; position: absolute; }
+/* Start – правый нижний угол */
+#startBtn { bottom: 5px; right: 5px; position: absolute; }
+/* Stop заменяет Start */
+#stopBtn { bottom: 5px; right: 5px; position: absolute; display:none; }
+/* Next – слева от Stop */
+#nextBtn { bottom: 5px; right: 50px; position: absolute; display:none; }
 
+/* Камера собеседника */
+.remote-video-wrapper { position: relative; width: 50%; margin: 2px; }
 .remote-video-wrapper video {
   width: 100%;
   height: 100%;
@@ -66,6 +73,12 @@ body, html {
   border-radius: 5px;
   object-fit: cover;
 }
+
+.remote-controls { position: absolute; top: 5px; left: 5px; width: 100%; height: 100%; }
+#likeBtn { top: 5px; left: 5px; position: absolute; }
+#reportBtn { top: 5px; right: 5px; position: absolute; }
+#muteBtn { top: 50px; right: 5px; position: absolute; }
+#giftBtn { bottom: 5px; left: 5px; position: absolute; }
 
 /* Чат — нижние 40% экрана */
 .chat-container {
@@ -84,11 +97,9 @@ body, html {
   border-radius: 5px;
 }
 
-.chat-message {
-  margin: 2px 0;
-}
+.chat-message { margin: 2px 0; }
 
-/* Поле ввода — фиксированное внизу, видно всегда */
+/* Поле ввода */
 .chat-input-fixed {
   position: fixed;
   bottom: env(safe-area-inset-bottom, 0);
