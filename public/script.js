@@ -13,7 +13,7 @@ const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Старт видео и подключение к WS ========
+// ======== Запуск видео и WS ========
 startBtn.onclick = async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
@@ -22,9 +22,7 @@ startBtn.onclick = async () => {
   localVideo.srcObject = localStream;
 
   socket = new WebSocket(
-    location.protocol === "https:"
-      ? `wss://${location.host}`
-      : `ws://${location.host}`
+    location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`
   );
 
   socket.onmessage = async (event) => {
@@ -72,7 +70,7 @@ function createPeer(isCaller) {
   }
 }
 
-// ======== Текстовый чат ========
+// ======== Чат ========
 function appendMessage(sender, text){
   const div = document.createElement("div");
   div.className = "chat-message";
