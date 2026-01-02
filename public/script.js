@@ -6,7 +6,6 @@ let usingFrontCamera = true;
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 
-// Кнопки
 const startBtn = document.getElementById("startBtn");
 const stopBtn = document.getElementById("stopBtn");
 const nextBtn = document.getElementById("nextBtn");
@@ -26,44 +25,37 @@ const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 // ======== Видео и WebSocket ========
 async function getCameraStream() {
-  if(localStream){
-    localStream.getTracks().forEach(t => t.stop());
-  }
+  if(localStream) localStream.getTracks().forEach(t => t.stop());
+
   localStream = await navigator.mediaDevices.getUserMedia({
     video: { facingMode: usingFrontCamera ? "user" : "environment" },
     audio: true
   });
   localVideo.srcObject = localStream;
+
   if(peer){
     const senders = peer.getSenders().filter(s => s.track.kind === 'video');
     senders.forEach((s, i) => s.replaceTrack(localStream.getVideoTracks()[i]));
   }
 }
 
+// Показываем кнопки после Start
 function showCallButtons(show){
-  flipBtn.style.display = show ? "block" : "none";
-  micBtn.style.display = show ? "block" : "none";
-
-  likeBtn.style.display = show ? "block" : "none";
-  reportBtn.style.display = show ? "block" : "none";
-  muteBtn.style.display = show ? "block" : "none";
-  giftBtn.style.display = show ? "block" : "none";
+  [flipBtn, micBtn, stopBtn, nextBtn, likeBtn, reportBtn, muteBtn, giftBtn].forEach(b => {
+    b.style.display = show ? "block" : "none";
+  });
+  startBtn.style.display = show ? "none" : "block";
 }
 
+// ======== Start/Stop/Next ========
 startBtn.onclick = async () => {
-  startBtn.style.display = "none";
-  stopBtn.style.display = "block";
-  nextBtn.style.display = "block";
-
   showCallButtons(true);
-
   await getCameraStream();
 
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
 
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
-
     if(data.type === "match") setTimeout(() => createPeer(data.role === "caller"), 100);
 
     if(data.sdp && peer){
@@ -81,7 +73,6 @@ startBtn.onclick = async () => {
     }
 
     if(data.type === "chat") appendMessage("Собеседник", data.message);
-
     if(data.type === "leave") stopCall();
   };
 };
@@ -89,22 +80,14 @@ startBtn.onclick = async () => {
 stopBtn.onclick = stopCall;
 nextBtn.onclick = () => {}; // просто нажимается
 
-flipBtn.onclick = () => {
-  usingFrontCamera = !usingFrontCamera;
-  getCameraStream();
-};
+flipBtn.onclick = () => { usingFrontCamera = !usingFrontCamera; getCameraStream(); };
 
 let micOn = true;
-micBtn.onclick = () => {
-  micOn = !micOn;
-  localStream.getAudioTracks()[0].enabled = micOn;
-  micBtn.textContent = micOn ? "🎤" : "🔇";
-};
+micBtn.onclick = () => { micOn = !micOn; localStream.getAudioTracks()[0].enabled = micOn; micBtn.textContent = micOn ? "🎤" : "🔇"; };
 
 muteBtn.onclick = () => {
   if(remoteVideo.srcObject){
-    const remoteAudio = remoteVideo.srcObject.getAudioTracks();
-    remoteAudio.forEach(t => t.enabled = !t.enabled);
+    remoteVideo.srcObject.getAudioTracks().forEach(t => t.enabled = !t.enabled);
   }
 };
 
@@ -147,15 +130,11 @@ chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(
 
 // ======== Стоп ========
 function stopCall(){
-  startBtn.style.display = "block";
-  stopBtn.style.display = "none";
-  nextBtn.style.display = "none";
-
   showCallButtons(false);
 
   if(peer) peer.close();
   if(socket) socket.close();
-  if(localStream) localStream.getTracks().forEach(t=>t.stop());
+  if(localStream) localStream.getTracks().forEach(t => t.stop());
 
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
