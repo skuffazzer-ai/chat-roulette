@@ -3,25 +3,33 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
-app.use(express.static('public')); // отдаём папку public
+app.use(express.static('public'));
+
+const ROOM_ID = "room1"; // фиксированная комната для двух пользователей
 
 io.on('connection', (socket) => {
-  console.log('Пользователь подключился');
+  console.log('Пользователь подключился:', socket.id);
+  socket.join(ROOM_ID);
 
+  // Сообщаем другим, что пришёл новый пользователь
+  socket.to(ROOM_ID).emit('user-joined', socket.id);
+
+  // Обработка сигналов
   socket.on('offer', (offer) => {
-    socket.broadcast.emit('offer', offer);
+    socket.to(ROOM_ID).emit('offer', offer);
   });
 
   socket.on('answer', (answer) => {
-    socket.broadcast.emit('answer', answer);
+    socket.to(ROOM_ID).emit('answer', answer);
   });
 
   socket.on('ice-candidate', (candidate) => {
-    socket.broadcast.emit('ice-candidate', candidate);
+    socket.to(ROOM_ID).emit('ice-candidate', candidate);
   });
 
   socket.on('disconnect', () => {
-    console.log('Пользователь отключился');
+    console.log('Пользователь отключился:', socket.id);
+    socket.to(ROOM_ID).emit('user-left', socket.id);
   });
 });
 
