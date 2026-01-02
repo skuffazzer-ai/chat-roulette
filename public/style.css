@@ -1,26 +1,25 @@
 body {
-  background: #111;
-  color: white;
-  text-align: center;
-  font-family: Arial, sans-serif;
-}
-
-.videos {
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  flex-direction: column;
+  align-items: center;
+  font-family: Arial, sans-serif;
   margin: 20px;
 }
 
+#videos {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 video {
-  width: 320px;
-  height: 240px;
-  background: black;
-  border-radius: 10px;
+  width: 45%;
+  margin: 10px;
+  border: 1px solid #333;
 }
 
 button {
   padding: 10px 20px;
   font-size: 16px;
-  margin: 10px;
+  cursor: pointer;
 }
