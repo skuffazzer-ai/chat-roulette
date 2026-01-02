@@ -12,32 +12,25 @@ const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
 const sendBtn = document.getElementById("sendBtn");
 
-// Кнопки управления
 const flipBtn = document.getElementById("flipBtn");
 const reportBtn = document.getElementById("reportBtn");
 const giftBtn = document.getElementById("giftBtn");
 const likeBtn = document.getElementById("likeBtn");
 const muteBtn = document.getElementById("muteBtn");
 
-// Новые кнопки для микрофона
-const muteMicBtn = document.getElementById("muteMicBtn");       // твой микрофон
-const muteRemoteBtn = document.getElementById("muteRemoteBtn"); // звук собеседника
-
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// Скрываем кнопки по умолчанию
+// Изначально скрываем flip и прочие кнопки до старта
 flipBtn.style.display = "none";
 reportBtn.style.display = "none";
 giftBtn.style.display = "none";
 likeBtn.style.display = "none";
 muteBtn.style.display = "none";
-muteMicBtn.style.display = "none";
-muteRemoteBtn.style.display = "none";
 
 let usingFrontCamera = true;
 
-// ======== Старт звонка ========
-async function startCall() {
+// ======== Start ========
+startBtn.onclick = async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
 
@@ -45,43 +38,20 @@ async function startCall() {
   stopBtn.style.display = "inline-block";
   nextBtn.style.display = "inline-block";
 
-  // Показываем кнопки после старта
   flipBtn.style.display = "inline-block";
   reportBtn.style.display = "inline-block";
   giftBtn.style.display = "inline-block";
   likeBtn.style.display = "inline-block";
   muteBtn.style.display = "inline-block";
-  muteMicBtn.style.display = "inline-block";
-  muteRemoteBtn.style.display = "inline-block";
 
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },
-      audio: true
-    });
-    localVideo.srcObject = localStream;
-  } catch (e) {
-    console.error("Не удалось получить камеру/микрофон:", e);
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-    startBtn.style.display = "inline-block";
-    stopBtn.style.display = "none";
-    nextBtn.style.display = "none";
-
-    flipBtn.style.display = "none";
-    reportBtn.style.display = "none";
-    giftBtn.style.display = "none";
-    likeBtn.style.display = "none";
-    muteBtn.style.display = "none";
-    muteMicBtn.style.display = "none";
-    muteRemoteBtn.style.display = "none";
-    return;
-  }
+  localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+  localVideo.srcObject = localStream;
 
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
 
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
+
     if (data.type === "match") setTimeout(() => createPeer(data.role === "caller"), 100);
 
     if (data.sdp && peer) {
@@ -101,38 +71,32 @@ async function startCall() {
     if (data.type === "chat") appendMessage("Собеседник", data.message);
     if (data.type === "leave") stopCall();
   };
-}
+};
 
-startBtn.onclick = startCall;
-
-// ======== Завершить звонок ========
+// ======== Stop ========
+stopBtn.onclick = stopCall;
 function stopCall() {
   stopBtn.style.display = "none";
   nextBtn.style.display = "none";
   startBtn.style.display = "inline-block";
   startBtn.disabled = false;
 
-  // Скрываем кнопки после остановки
   flipBtn.style.display = "none";
   reportBtn.style.display = "none";
   giftBtn.style.display = "none";
   likeBtn.style.display = "none";
   muteBtn.style.display = "none";
-  muteMicBtn.style.display = "none";
-  muteRemoteBtn.style.display = "none";
 
   if(peer) { peer.close(); peer = null; }
   if(socket) { socket.close(); socket = null; }
-  if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  if(localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
 
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
 }
 
-stopBtn.onclick = stopCall;
-
-// ======== Next кнопка ========
+// ======== Next ========
 nextBtn.onclick = () => console.log("Следующий нажата");
 
 // ======== Peer ========
@@ -170,7 +134,7 @@ function sendMessage(){
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-// ======== flipBtn для всех устройств ========
+// ======== flipBtn ========
 flipBtn.onclick = async () => {
   if(!localStream) return;
 
@@ -179,11 +143,7 @@ flipBtn.onclick = async () => {
 
     localStream.getTracks().forEach(t => t.stop());
 
-    localStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode },
-      audio: true
-    });
-
+    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
     localVideo.srcObject = localStream;
 
     if(peer){
@@ -202,24 +162,7 @@ flipBtn.onclick = async () => {
 reportBtn.onclick = () => console.log("Жалоба нажата");
 giftBtn.onclick = () => console.log("Подарок нажата");
 likeBtn.onclick = () => console.log("Лайк нажата");
-
-// Мут своего микрофона
-muteMicBtn.onclick = () => {
-  if(!localStream) return;
-  const track = localStream.getAudioTracks()[0];
-  if(track) track.enabled = !track.enabled;
-  muteMicBtn.textContent = track.enabled ? "Микрофон ON" : "Микрофон OFF";
-};
-
-// Мут собеседника
-muteRemoteBtn.onclick = () => {
-  if(!remoteVideo.srcObject) return;
-  const remoteStream = remoteVideo.srcObject;
-  remoteStream.getAudioTracks().forEach(track => {
-    track.enabled = !track.enabled;
-  });
-  muteRemoteBtn.textContent = remoteStream.getAudioTracks()[0].enabled ? "Собеседник ON" : "Собеседник OFF";
-};
+muteBtn.onclick = () => console.log("Мут собеседника");
 
 // ======== Pull-to-refresh ========
 let touchStartY = 0;
