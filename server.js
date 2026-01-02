@@ -1,38 +1,46 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+const express = require("express");
+const WebSocket = require("ws");
+const path = require("path");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+app.use(express.static("public"));
 
-app.use(express.static('public'));
-
-let users = [];
-
-io.on('connection', socket => {
-  users.push(socket);
-
-  if (users.length === 2) {
-    users[0].emit('role', 'caller');
-    users[1].emit('role', 'callee');
-  }
-
-  socket.on('offer', data => {
-    socket.broadcast.emit('offer', data);
-  });
-
-  socket.on('answer', data => {
-    socket.broadcast.emit('answer', data);
-  });
-
-  socket.on('ice', data => {
-    socket.broadcast.emit('ice', data);
-  });
-
-  socket.on('disconnect', () => {
-    users = users.filter(u => u !== socket);
-  });
+const server = app.listen(process.env.PORT || 3000, () => {
+  console.log("Server started");
 });
 
-server.listen(process.env.PORT || 3000);
+const wss = new WebSocket.Server({ server });
+
+let waitingUser = null;
+
+wss.on("connection", (ws) => {
+  ws.partner = null;
+
+  if (waitingUser) {
+    ws.partner = waitingUser;
+    waitingUser.partner = ws;
+
+    ws.send(JSON.stringify({ type: "match" }));
+    waitingUser.send(JSON.stringify({ type: "match" }));
+
+    waitingUser = null;
+  } else {
+    waitingUser = ws;
+  }
+
+  ws.on("message", (msg) => {
+    if (ws.partner) {
+      ws.partner.send(msg.toString());
+    }
+  });
+
+  ws.on("close", () => {
+    if (ws === waitingUser) {
+      waitingUser = null;
+    }
+    if (ws.partner) {
+      ws.partner.send(JSON.stringify({ type: "leave" }));
+      ws.partner.partner = null;
+    }
+  });
+});
