@@ -7,14 +7,12 @@ body, html {
   background: #1a1a1a;
   color: white;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
-/* Верхняя половина экрана: видео */
+/* Видео */
 .videos-container {
   display: flex;
-  flex: 0.6; /* 60% экрана */
+  flex: 0.6;
   padding: 2px;
   box-sizing: border-box;
 }
@@ -53,9 +51,7 @@ body, html {
   color: white;
 }
 
-.controls button:hover {
-  background: #777;
-}
+.controls button:hover { background: #777; }
 
 .remote-video-wrapper {
   width: 50%;
@@ -70,42 +66,37 @@ body, html {
   object-fit: cover;
 }
 
-/* Нижняя половина экрана: чат */
+/* Чат */
 .chat-container {
-  flex: 0.4; /* 40% экрана */
-  display: flex;
-  flex-direction: column;
+  flex: 0.4;
+  height: 40%;
   padding: 5px;
   box-sizing: border-box;
   background: #222;
+  overflow: hidden;
 }
 
-/* Сообщения чата с прокруткой */
 .chat-messages {
-  flex: 1;
+  height: 100%;
   overflow-y: auto;
-  margin-bottom: 5px;
   padding: 5px;
   border: 1px solid #555;
   border-radius: 5px;
 }
 
-.chat-message {
-  margin: 2px 0;
-}
-
-/* Поле ввода выше сенсорной панели */
-.chat-input-wrapper {
-  flex: 0 0 auto;
-  padding-bottom: env(safe-area-inset-bottom, 12px);
-  background: #222;
-}
-
-.chat-input {
+/* Поле ввода — фиксированное */
+.chat-input-fixed {
+  position: fixed;
+  bottom: env(safe-area-inset-bottom, 0);
+  left: 0;
+  width: 100%;
   display: flex;
+  background: #222;
+  padding: 5px;
+  box-sizing: border-box;
 }
 
-.chat-input input {
+.chat-input-fixed input {
   flex: 1;
   padding: 8px;
   border-radius: 5px 0 0 5px;
@@ -113,7 +104,7 @@ body, html {
   outline: none;
 }
 
-.chat-input button {
+.chat-input-fixed button {
   padding: 8px 15px;
   border: none;
   background: #555;
@@ -122,6 +113,6 @@ body, html {
   cursor: pointer;
 }
 
-.chat-input button:hover {
+.chat-input-fixed button:hover {
   background: #777;
 }
