@@ -96,7 +96,7 @@ function appendMessage(sender,text){
   msgDiv.className="chat-message";
   msgDiv.textContent=`${sender}: ${text}`;
 
-  if(document.activeElement===chatInput){
+  if(document.activeElement === chatInput){
     const clone = msgDiv.cloneNode(true);
     chatOverlay.appendChild(clone);
     chatOverlay.scrollTop = chatOverlay.scrollHeight;
@@ -105,10 +105,11 @@ function appendMessage(sender,text){
       clone.style.animation="floatOut 0.5s forwards";
       setTimeout(()=>clone.remove(),500);
     },3000);
-  }
 
-  chatMessages.appendChild(msgDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  } else {
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 }
 
 function sendMessage(){
@@ -121,8 +122,17 @@ function sendMessage(){
 }
 
 // ===== Клавиатура =====
-chatInput.addEventListener("focus", ()=>{ chatOverlay.style.display="flex"; });
-chatInput.addEventListener("blur", ()=>{ chatOverlay.innerHTML=""; chatOverlay.style.display="none"; });
+chatInput.addEventListener("focus", ()=>{
+  document.body.style.overflow="hidden";
+  chatMessages.style.display="none";
+  chatOverlay.style.display="flex";
+});
+chatInput.addEventListener("blur", ()=>{
+  document.body.style.overflow="hidden";
+  chatMessages.style.display="block";
+  chatOverlay.style.display="none";
+  chatOverlay.innerHTML="";
+});
 
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e=>{ if(e.key==="Enter") sendMessage(); });
