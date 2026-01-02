@@ -12,20 +12,18 @@ const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
 const sendBtn = document.getElementById("sendBtn");
 
+// Кнопки управления
 const flipBtn = document.getElementById("flipBtn");
 const reportBtn = document.getElementById("reportBtn");
 const giftBtn = document.getElementById("giftBtn");
 const likeBtn = document.getElementById("likeBtn");
 const muteBtn = document.getElementById("muteBtn");
+const muteMicBtn = document.getElementById("muteMicBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// Изначально скрываем flip и прочие кнопки до старта
-flipBtn.style.display = "none";
-reportBtn.style.display = "none";
-giftBtn.style.display = "none";
-likeBtn.style.display = "none";
-muteBtn.style.display = "none";
+// Скрываем кнопки до старта
+[flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(btn => btn.style.display = "none");
 
 let usingFrontCamera = true;
 
@@ -38,20 +36,22 @@ startBtn.onclick = async () => {
   stopBtn.style.display = "inline-block";
   nextBtn.style.display = "inline-block";
 
-  flipBtn.style.display = "inline-block";
-  reportBtn.style.display = "inline-block";
-  giftBtn.style.display = "inline-block";
-  likeBtn.style.display = "inline-block";
-  muteBtn.style.display = "inline-block";
+  // Показываем кнопки после старта
+  [flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(btn => btn.style.display = "inline-block");
 
-  localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
-  localVideo.srcObject = localStream;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+    localVideo.srcObject = localStream;
+  } catch(e) {
+    console.error("Не удалось получить камеру/микрофон:", e);
+    stopCall();
+    return;
+  }
 
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
 
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
-
     if (data.type === "match") setTimeout(() => createPeer(data.role === "caller"), 100);
 
     if (data.sdp && peer) {
@@ -81,11 +81,7 @@ function stopCall() {
   startBtn.style.display = "inline-block";
   startBtn.disabled = false;
 
-  flipBtn.style.display = "none";
-  reportBtn.style.display = "none";
-  giftBtn.style.display = "none";
-  likeBtn.style.display = "none";
-  muteBtn.style.display = "none";
+  [flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(btn => btn.style.display = "none");
 
   if(peer) { peer.close(); peer = null; }
   if(socket) { socket.close(); socket = null; }
@@ -137,25 +133,17 @@ chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(
 // ======== flipBtn ========
 flipBtn.onclick = async () => {
   if(!localStream) return;
-
   try {
     const facingMode = usingFrontCamera ? "environment" : "user";
-
     localStream.getTracks().forEach(t => t.stop());
-
     localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
     localVideo.srcObject = localStream;
-
     if(peer){
       const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
       if(sender) await sender.replaceTrack(localStream.getVideoTracks()[0]);
     }
-
     usingFrontCamera = !usingFrontCamera;
-    console.log("Камера переключена на:", facingMode);
-  } catch(err) {
-    console.error("Ошибка переключения камеры:", err);
-  }
+  } catch(err) { console.error("Ошибка переключения камеры:", err); }
 };
 
 // ======== Остальные кнопки ========
@@ -163,6 +151,14 @@ reportBtn.onclick = () => console.log("Жалоба нажата");
 giftBtn.onclick = () => console.log("Подарок нажата");
 likeBtn.onclick = () => console.log("Лайк нажата");
 muteBtn.onclick = () => console.log("Мут собеседника");
+
+// ======== Кнопка микрофона ========
+muteMicBtn.onclick = () => {
+  if(!localStream) return;
+  const track = localStream.getAudioTracks()[0];
+  track.enabled = !track.enabled;
+  muteMicBtn.textContent = track.enabled ? "🎤" : "🔇";
+};
 
 // ======== Pull-to-refresh ========
 let touchStartY = 0;
