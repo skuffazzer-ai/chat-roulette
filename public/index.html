@@ -7,11 +7,17 @@
 </head>
 <body>
 
-<h1>Видео чат-рулетка</h1>
-
-<div class="videos">
+<div class="videos-container">
   <video id="localVideo" autoplay muted playsinline></video>
   <video id="remoteVideo" autoplay playsinline></video>
+</div>
+
+<div class="chat-container">
+  <div id="chatMessages" class="chat-messages"></div>
+  <div class="chat-input">
+    <input type="text" id="chatInput" placeholder="Напишите сообщение..."/>
+    <button id="sendBtn">Отправить</button>
+  </div>
 </div>
 
 <div class="controls">
