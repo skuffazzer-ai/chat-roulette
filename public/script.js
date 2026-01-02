@@ -9,7 +9,7 @@ let isCaller = false;
 
 const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-// Инициализация локального потока
+// Получение локального потока
 async function initLocalStream() {
   if (localStream) return;
   try {
@@ -27,10 +27,12 @@ function createPeerConnection() {
 
   peerConnection = new RTCPeerConnection(configuration);
 
+  // Поток собеседника
   peerConnection.ontrack = (event) => {
     remoteVideo.srcObject = event.streams[0];
   };
 
+  // ICE-кандидаты
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) socket.emit('ice-candidate', event.candidate);
   };
@@ -40,7 +42,7 @@ function createPeerConnection() {
   }
 }
 
-// Начало звонка (для инициатора)
+// Начало звонка (инициатор)
 async function startCall() {
   isCaller = true;
   await initLocalStream();
@@ -51,10 +53,10 @@ async function startCall() {
   socket.emit('offer', offer);
 }
 
-// Когда приходит offer (второй пользователь)
+// Когда приходит offer (второй пользователь автоматически стартует)
 socket.on('offer', async (offer) => {
-  await initLocalStream();      // включаем камеру второго пользователя
-  createPeerConnection();        // создаём PeerConnection
+  await initLocalStream();
+  createPeerConnection();
 
   await peerConnection.setRemoteDescription(offer);
   const answer = await peerConnection.createAnswer();
@@ -78,5 +80,5 @@ socket.on('ice-candidate', async (candidate) => {
   }
 });
 
-// Кнопка для первого пользователя
+// Кнопка только для первого пользователя
 startButton.addEventListener('click', startCall);
