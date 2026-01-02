@@ -137,26 +137,28 @@ flipBtn.onclick = async () => {
   try {
     const audioTracks = localStream.getAudioTracks();
     const newStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentFacing },
+      video: { facingMode: { exact: currentFacing } },
       audio: audioTracks.length ? true : false
     });
 
     const newVideoTrack = newStream.getVideoTracks()[0];
     const oldVideoTrack = localStream.getVideoTracks()[0];
-    if(oldVideoTrack) oldVideoTrack.stop();
+
+    if (oldVideoTrack) oldVideoTrack.stop();
     localStream.removeTrack(oldVideoTrack);
     localStream.addTrack(newVideoTrack);
+
     localVideo.srcObject = null;
     localVideo.srcObject = localStream;
 
-    if(peer) {
+    if (peer) {
       const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
-      if(sender) sender.replaceTrack(newVideoTrack);
+      if (sender) sender.replaceTrack(newVideoTrack);
     }
 
-    console.log("Камера перевернута:", currentFacing);
-  } catch(e) {
-    console.error("Ошибка при перевороте камеры:", e);
+    console.log("Камера переключена на:", currentFacing === "user" ? "фронтальную" : "заднюю");
+  } catch (e) {
+    console.error("Ошибка при переключении камеры:", e);
   }
 };
 
