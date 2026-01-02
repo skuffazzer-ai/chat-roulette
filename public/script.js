@@ -24,8 +24,7 @@ const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 // Изначально скрываем flipBtn
 flipBtn.style.display = "none";
 
-let videoDevices = [];
-let currentVideoIndex = 0;
+let usingFrontCamera = true; // флаг для flipBtn
 
 // ======== Старт звонка ========
 async function startCall() {
@@ -38,23 +37,11 @@ async function startCall() {
   flipBtn.style.display = "inline-block";
 
   try {
-    // Получаем все видеоустройства
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    videoDevices = devices.filter(d => d.kind === "videoinput");
-
-    if (videoDevices.length === 0) throw new Error("Нет видеоустройств");
-
-    // Выбираем фронтальную камеру, если есть
-    currentVideoIndex = videoDevices.findIndex(d => d.label.toLowerCase().includes("front"));
-    if (currentVideoIndex === -1) currentVideoIndex = 0;
-
-    const deviceId = videoDevices[currentVideoIndex].deviceId;
-
+    // Запрашиваем поток с фронтальной камерой
     localStream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: deviceId } },
+      video: { facingMode: "user" },
       audio: true
     });
-
     localVideo.srcObject = localStream;
   } catch (e) {
     console.error("Не удалось получить камеру/микрофон:", e);
@@ -67,6 +54,7 @@ async function startCall() {
     return;
   }
 
+  // Подключение WebSocket
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
 
   socket.onmessage = async (event) => {
@@ -151,36 +139,33 @@ function sendMessage(){
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-// ======== flipBtn ========
+// ======== flipBtn для всех устройств ========
 flipBtn.onclick = async () => {
-  if (!localStream || videoDevices.length < 2) return;
-
-  // Выбираем следующую камеру в списке
-  currentVideoIndex = (currentVideoIndex + 1) % videoDevices.length;
-  const deviceId = videoDevices[currentVideoIndex].deviceId;
+  if(!localStream) return;
 
   try {
-    const newStream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: deviceId } },
-      audio: localStream.getAudioTracks().length > 0
+    // Определяем направление камеры
+    const facingMode = usingFrontCamera ? "environment" : "user";
+
+    // Останавливаем старый поток
+    localStream.getTracks().forEach(t => t.stop());
+
+    // Создаём новый поток с нужной камерой
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode },
+      audio: true
     });
 
-    const newVideoTrack = newStream.getVideoTracks()[0];
-    const oldVideoTrack = localStream.getVideoTracks()[0];
-
-    oldVideoTrack.stop();
-    localStream.removeTrack(oldVideoTrack);
-    localStream.addTrack(newVideoTrack);
-
-    localVideo.srcObject = null;
     localVideo.srcObject = localStream;
 
+    // Заменяем видеотрек в PeerConnection
     if(peer){
       const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
-      if(sender) await sender.replaceTrack(newVideoTrack);
+      if(sender) await sender.replaceTrack(localStream.getVideoTracks()[0]);
     }
 
-    console.log("Камера переключена:", videoDevices[currentVideoIndex].label || deviceId);
+    usingFrontCamera = !usingFrontCamera; // переключаем флаг
+    console.log("Камера переключена на:", facingMode);
   } catch(err) {
     console.error("Ошибка переключения камеры:", err);
   }
@@ -207,4 +192,4 @@ document.addEventListener('touchmove', e => {
 });
 
 // ======== Автоскролл чата ========
-chatInput.addEventListener("focus", () => { setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 300); });
+chatInput.addEventListener("focus", () => { setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 300); });  
