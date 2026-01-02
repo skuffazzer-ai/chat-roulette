@@ -7,17 +7,18 @@
 </head>
 <body>
 
-  <div class="videos">
-    <video id="localVideo" autoplay muted playsinline></video>
-    <video id="remoteVideo" autoplay playsinline></video>
-  </div>
+<h1>Видео чат-рулетка</h1>
 
-  <div class="controls">
-    <button id="startBtn">Начать</button>
-    <button id="stopBtn">Закончить</button>
-  </div>
+<div class="videos">
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+</div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
+<div class="controls">
+  <button id="startBtn">Начать</button>
+  <button id="stopBtn" disabled>Завершить</button>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
