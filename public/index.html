@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Chat Roulette</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="style.css">
@@ -9,30 +9,16 @@
 <body>
 
 <div class="videos-container">
-
-  <!-- Локальная камера -->
   <div class="local-video-wrapper">
     <video id="localVideo" autoplay muted playsinline></video>
     <div class="controls">
-      <button id="startBtn">▶️</button>
-      <button id="stopBtn">⏹️</button>
-      <button id="nextBtn">⏭️</button>
-      <button id="muteMicBtn">🎤</button>
-      <button id="flipBtn">🔄</button>
+      <button id="startBtn">Начать</button>
+      <button id="stopBtn" disabled>Завершить</button>
     </div>
   </div>
-
-  <!-- Камера собеседника -->
   <div class="remote-video-wrapper">
     <video id="remoteVideo" autoplay playsinline></video>
-    <div class="controls">
-      <button id="reportBtn">⚠️</button>
-      <button id="giftBtn">🎁</button>
-      <button id="likeBtn">❤️</button>
-      <button id="muteBtn">🔇</button>
-    </div>
   </div>
-
 </div>
 
 <div class="chat-container">
