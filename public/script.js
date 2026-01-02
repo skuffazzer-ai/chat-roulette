@@ -19,12 +19,12 @@ const giftBtn = document.getElementById("giftBtn");
 
 const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
-const chatOverlay = document.getElementById("chatMessagesOverlay");
+const chatOverlay = document.getElementById("chatOverlayMessages");
 const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Видео ========
+// ======== Камера ========
 async function getCameraStream() {
   if(localStream) localStream.getTracks().forEach(t => t.stop());
 
@@ -35,12 +35,12 @@ async function getCameraStream() {
   localVideo.srcObject = localStream;
 
   if(peer){
-    const senders = peer.getSenders().filter(s => s.track.kind === 'video');
-    senders.forEach((s, i) => s.replaceTrack(localStream.getVideoTracks()[i]));
+    const sender = peer.getSenders().find(s => s.track.kind === 'video');
+    if(sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
   }
 }
 
-// Показываем/скрываем кнопки после Start
+// Показ кнопок после Start
 function showCallButtons(show){
   [flipBtn, micBtn, stopBtn, nextBtn, likeBtn, reportBtn, muteBtn, giftBtn].forEach(b => b.style.display = show ? "block" : "none");
   startBtn.style.display = show ? "none" : "block";
@@ -109,16 +109,20 @@ function createPeer(isCaller){
 
 // ======== Чат ========
 function appendMessage(sender, text){
-  const div1 = document.createElement("div");
-  div1.className = "chat-message";
-  div1.textContent = `${sender}: ${text}`;
-  chatMessages.appendChild(div1);
+  const msgDiv = document.createElement("div");
+  msgDiv.className = "chat-message";
+  msgDiv.textContent = `${sender}: ${text}`;
 
-  const div2 = div1.cloneNode(true);
-  chatOverlay.appendChild(div2);
+  // Добавляем поверх видео, если клавиатура открыта
+  if(document.activeElement === chatInput){
+    const clone = msgDiv.cloneNode(true);
+    chatOverlay.appendChild(clone);
+    chatOverlay.scrollTop = chatOverlay.scrollHeight;
+  }
 
+  // Стандартный чат
+  chatMessages.appendChild(msgDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
-  chatOverlay.scrollTop = chatOverlay.scrollHeight;
 }
 
 function sendMessage(){
@@ -129,17 +133,16 @@ function sendMessage(){
 
   appendMessage("Вы", msg);
   chatInput.value = "";
-  chatInput.focus(); // клавиатура остаётся открытой
+  chatInput.focus();
 }
 
-// Открытие прозрачного чата при фокусе
+// ======== Клавиатура ========
 chatInput.addEventListener("focus", () => {
-  chatOverlay.style.display = "block";
-  chatOverlay.scrollTop = chatOverlay.scrollHeight;
+  chatOverlay.style.display = "flex";
 });
 
-// Закрытие прозрачного чата при blur
 chatInput.addEventListener("blur", () => {
+  chatOverlay.innerHTML = "";
   chatOverlay.style.display = "none";
 });
 
