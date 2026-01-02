@@ -1,11 +1,12 @@
 const socket = io();
+
 const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 const startBtn = document.getElementById('startBtn');
 
 let localStream;
 let pc;
-let isCaller = false;
+let role;
 
 const config = {
   iceServers: [
@@ -46,14 +47,13 @@ function createPC() {
 
 startBtn.onclick = async () => {
   await initMedia();
-  socket.emit('ready');
+  createPC();
 };
 
-socket.on('initiate-call', async caller => {
-  isCaller = caller;
-  createPC();
+socket.on('role', async r => {
+  role = r;
 
-  if (isCaller) {
+  if (role === 'caller') {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     socket.emit('offer', offer);
@@ -67,10 +67,10 @@ socket.on('offer', async offer => {
   socket.emit('answer', answer);
 });
 
-socket.on('answer', answer => {
-  pc.setRemoteDescription(answer);
+socket.on('answer', async answer => {
+  await pc.setRemoteDescription(answer);
 });
 
-socket.on('ice-candidate', candidate => {
-  pc.addIceCandidate(candidate);
+socket.on('ice-candidate', async candidate => {
+  await pc.addIceCandidate(candidate);
 });
