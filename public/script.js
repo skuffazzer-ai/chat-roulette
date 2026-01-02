@@ -20,14 +20,15 @@ const muteMicBtn = document.getElementById("muteMicBtn");
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 // Скрываем кнопки до старта
-[flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(b => b.style.display = "none");
+[stopBtn, nextBtn, flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(b => b.style.display = "none");
 
 // ======== Start ========
 startBtn.onclick = async () => {
   startBtn.style.display = "none";
   stopBtn.style.display = "inline-block";
   nextBtn.style.display = "inline-block";
-  [flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(b => b.style.display = "inline-block");
+
+  [flipBtn, muteMicBtn, reportBtn, giftBtn, likeBtn, muteBtn].forEach(b => b.style.display = "inline-block");
 
   localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
   localVideo.srcObject = localStream;
@@ -55,11 +56,12 @@ stopBtn.onclick = stopCall;
 function stopCall() {
   stopBtn.style.display = "none";
   nextBtn.style.display = "none";
-  startBtn.style.display = "inline-block";
-  [flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(b => b.style.display = "none");
+  [flipBtn, muteMicBtn, reportBtn, giftBtn, likeBtn, muteBtn].forEach(b => b.style.display = "none");
 
-  if(peer){ peer.close(); peer = null; }
-  if(socket){ socket.close(); socket = null; }
+  startBtn.style.display = "inline-block";
+
+  if(peer){ peer.close(); peer=null; }
+  if(socket){ socket.close(); socket=null; }
   if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
 
   localVideo.srcObject = null;
