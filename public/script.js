@@ -24,8 +24,6 @@ const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 // Изначально скрываем flipBtn
 flipBtn.style.display = "none";
 
-let currentFacing = "user"; // фронтальная камера по умолчанию
-
 // ======== Старт звонка ========
 async function startCall() {
   startBtn.disabled = true;
@@ -39,7 +37,7 @@ async function startCall() {
   flipBtn.style.display = "inline-block";
 
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing }, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
     localVideo.srcObject = localStream;
   } catch (e) {
     console.error("Не удалось получить камеру/микрофон:", e);
@@ -139,25 +137,39 @@ sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
 // ======== Новые кнопки ========
+
+// Функция переключения камеры для iOS и Android
 flipBtn.onclick = async () => {
   if (!localStream) return;
 
-  currentFacing = currentFacing === "user" ? "environment" : "user";
-
   const audioTracks = localStream.getAudioTracks();
-  
+  const currentVideoTrack = localStream.getVideoTracks()[0];
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const videoDevices = devices.filter(d => d.kind === "videoinput");
+
+  if (videoDevices.length < 2) {
+    console.warn("Нет второй камеры для переключения");
+    return;
+  }
+
+  const currentId = currentVideoTrack.getSettings()?.deviceId;
+  const nextDevice = videoDevices.find(d => d.deviceId !== currentId);
+
+  if (!nextDevice) {
+    console.warn("Не удалось найти другую камеру");
+    return;
+  }
+
   try {
-    // Пробуем переключить через facingMode
-    let newStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentFacing },
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: nextDevice.deviceId } },
       audio: audioTracks.length ? true : false
     });
 
     const newVideoTrack = newStream.getVideoTracks()[0];
-    const oldVideoTrack = localStream.getVideoTracks()[0];
-
-    if (oldVideoTrack) oldVideoTrack.stop();
-    localStream.removeTrack(oldVideoTrack);
+    currentVideoTrack.stop();
+    localStream.removeTrack(currentVideoTrack);
     localStream.addTrack(newVideoTrack);
 
     localVideo.srcObject = null;
@@ -168,43 +180,13 @@ flipBtn.onclick = async () => {
       if (sender) sender.replaceTrack(newVideoTrack);
     }
 
-    console.log("Камера переключена на:", currentFacing);
+    console.log("Камера успешно переключена на:", nextDevice.label);
   } catch (err) {
-    console.warn("facingMode не сработал, используем fallback deviceId", err);
-
-    // fallback: берём другую доступную камеру
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videoDevices = devices.filter(d => d.kind === "videoinput");
-    const currentId = localStream.getVideoTracks()[0]?.getSettings()?.deviceId;
-    const nextDevice = videoDevices.find(d => d.deviceId !== currentId);
-
-    if (nextDevice) {
-      const fallbackStream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: nextDevice.deviceId } },
-        audio: audioTracks.length ? true : false
-      });
-
-      const fallbackVideoTrack = fallbackStream.getVideoTracks()[0];
-      const oldVideoTrack = localStream.getVideoTracks()[0];
-      if (oldVideoTrack) oldVideoTrack.stop();
-      localStream.removeTrack(oldVideoTrack);
-      localStream.addTrack(fallbackVideoTrack);
-
-      localVideo.srcObject = null;
-      localVideo.srcObject = localStream;
-
-      if (peer) {
-        const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
-        if (sender) sender.replaceTrack(fallbackVideoTrack);
-      }
-
-      console.log("Камера переключена через fallback deviceId:", nextDevice.label);
-    } else {
-      console.error("Не удалось найти другую камеру");
-    }
+    console.error("Ошибка при переключении камеры:", err);
   }
 };
 
+// Остальные кнопки (с дефолтным поведением)
 reportBtn.onclick = () => console.log("Жалоба нажата");
 giftBtn.onclick = () => console.log("Подарок нажата");
 likeBtn.onclick = () => console.log("Лайк нажата");
