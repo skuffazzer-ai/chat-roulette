@@ -9,27 +9,39 @@ let isCaller = false;
 
 const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-// Получаем локальный поток
+// Инициализация локального потока
 async function initLocalStream() {
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-  localVideo.srcObject = localStream;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localVideo.srcObject = localStream;
+  } catch (err) {
+    console.error('Ошибка доступа к камере/микрофону:', err);
+    alert('Невозможно получить доступ к камере и микрофону. Разрешите доступ.');
+  }
 }
 
-// Создаём PeerConnection
+// Создание PeerConnection и добавление треков
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(configuration);
 
+  // Поток от собеседника
   peerConnection.ontrack = (event) => {
     remoteVideo.srcObject = event.streams[0];
   };
 
+  // ICE-кандидаты
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit('ice-candidate', event.candidate);
     }
   };
 
-  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+  // Добавляем локальные треки в PeerConnection
+  if (localStream) {
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+  } else {
+    console.warn('Локальный поток ещё не инициализирован');
+  }
 }
 
 // Начало звонка
@@ -43,27 +55,32 @@ async function startCall() {
   socket.emit('offer', offer);
 }
 
-// Сигнальный сервер
-socket.on('user-joined', () => {
-  // Если пришёл кто-то ещё и мы ещё не создали соединение
+// Пользователь присоединился
+socket.on('user-joined', async () => {
   if (!peerConnection && !isCaller) {
-    startCall(); // автоматически создаём offer, если второй подключается
+    await initLocalStream();
+    createPeerConnection();
   }
 });
 
+// Получение offer
 socket.on('offer', async (offer) => {
-  if (!peerConnection) await initLocalStream(), createPeerConnection();
-
+  if (!peerConnection) {
+    await initLocalStream();
+    createPeerConnection();
+  }
   await peerConnection.setRemoteDescription(offer);
   const answer = await peerConnection.createAnswer();
   await peerConnection.setLocalDescription(answer);
   socket.emit('answer', answer);
 });
 
+// Получение answer
 socket.on('answer', async (answer) => {
   await peerConnection.setRemoteDescription(answer);
 });
 
+// Получение ICE-кандидата
 socket.on('ice-candidate', async (candidate) => {
   try {
     if (peerConnection) await peerConnection.addIceCandidate(candidate);
