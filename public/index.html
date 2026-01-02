@@ -1,28 +1,20 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Видео чат-рулетка</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Видео чат-рулетка</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <h1>Видео чат-рулетка</h1>
+  <div id="videos">
+    <video id="localVideo" autoplay muted></video>
+    <video id="remoteVideo" autoplay></video>
+  </div>
+  <button id="startButton">Начать</button>
 
-<h1>Видео чат-рулетка</h1>
-
-<div class="videos">
-  <!-- muted ТОЛЬКО у локального видео -->
-  <video id="localVideo" autoplay playsinline muted></video>
-
-  <!-- remoteVideo НЕ muted -->
-  <video id="remoteVideo" autoplay playsinline></video>
-</div>
-
-<div class="controls">
-  <button id="startBtn">Начать</button>
-  <button id="stopBtn" disabled>Завершить</button>
-</div>
-
-<script src="script.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
