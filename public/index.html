@@ -12,7 +12,7 @@
   <div class="local-video-wrapper">
     <video id="localVideo" autoplay muted playsinline></video>
 
-    <!-- Мои кнопки -->
+    <!-- Кнопки моей камеры -->
     <button id="flipBtn">🔄</button>
     <button id="micBtn">🎤</button>
     <button id="startBtn">▶️</button>
@@ -31,17 +31,16 @@
   </div>
 </div>
 
-<!-- Сообщения поверх видео при открытой клавиатуре -->
+<!-- Плавающий чат поверх видео -->
 <div class="chat-overlay">
   <div id="chatOverlayMessages"></div>
 </div>
 
-<!-- Стандартный чат -->
+<!-- Стандартный чат под видео -->
 <div class="chat-container">
-  <div id="chatMessages"></div>
+  <div id="chatMessages" class="chat-messages"></div>
 </div>
 
-<!-- Поле ввода -->
 <div class="chat-input-fixed">
   <input type="text" id="chatInput" placeholder="Напишите сообщение..." />
   <button id="sendBtn">Отправить</button>
