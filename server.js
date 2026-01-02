@@ -11,10 +11,9 @@ io.on('connection', (socket) => {
   console.log('Пользователь подключился:', socket.id);
   socket.join(ROOM_ID);
 
-  // Сообщаем другим, что пришёл новый пользователь
+  // Сообщаем другим, что пользователь пришёл
   socket.to(ROOM_ID).emit('user-joined', socket.id);
 
-  // Обработка сигналов
   socket.on('offer', (offer) => {
     socket.to(ROOM_ID).emit('offer', offer);
   });
