@@ -1,4 +1,4 @@
-body, html {
+  body, html {
   margin: 0;
   padding: 0;
   width: 100vw;
@@ -32,13 +32,17 @@ body, html {
 
 .controls {
   position: absolute;
-  top: 5px;
-  right: 5px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
   z-index: 10;
 }
+
+/* Местоположение кнопок */
+#flipBtn { top: 5px; right: 5px; display: none; }
+#micBtn { top: 50px; right: 5px; display: none; }
+#startBtn { bottom: 5px; right: 5px; display: block; }
+#stopBtn { bottom: 5px; right: 5px; display: none; }
+#nextBtn { bottom: 5px; right: 70px; display: none; }
 
 .controls button {
   padding: 5px 8px;
@@ -50,13 +54,6 @@ body, html {
   color: white;
 }
 .controls button:hover { background: rgba(119, 119, 119, 0.8); }
-
-#startBtn, #stopBtn, #nextBtn {
-  margin-top: 5px;
-  display: block;
-}
-
-.stop-hidden, .next-hidden { display: none; }
 
 .remote-video-wrapper {
   width: 50%;
@@ -77,10 +74,14 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  top: 5px;
-  left: 5px;
   z-index: 10;
 }
+
+/* Местоположение кнопок собеседника */
+#likeBtn { top: 5px; left: 5px; display: none; }
+#reportBtn { top: 5px; right: 5px; display: none; }
+#muteBtn { top: 50px; right: 5px; display: none; }
+#giftBtn { bottom: 5px; left: 5px; display: none; }
 
 .remote-controls button {
   padding: 5px 8px;
