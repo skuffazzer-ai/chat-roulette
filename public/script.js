@@ -10,7 +10,6 @@ const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
 const sendBtn = document.getElementById("sendBtn");
 
-// Кнопки управления
 const flipBtn = document.getElementById("flipBtn");
 const reportBtn = document.getElementById("reportBtn");
 const giftBtn = document.getElementById("giftBtn");
@@ -28,20 +27,15 @@ startBtn.onclick = async () => {
   startBtn.style.display = "none";
   stopBtn.style.display = "inline-block";
   nextBtn.style.display = "inline-block";
-  muteMicBtn.style.display = "inline-block";
-
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
+  [flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(b => b.style.display = "inline-block");
 
   localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
   localVideo.srcObject = localStream;
 
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
-
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
     if (data.type === "match") setTimeout(() => createPeer(data.role === "caller"), 100);
-
     if (data.sdp && peer) {
       await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
       if (data.sdp.type === "offer") {
@@ -50,12 +44,7 @@ startBtn.onclick = async () => {
         socket.send(JSON.stringify({ sdp: peer.localDescription }));
       }
     }
-
-    if (data.candidate && peer) {
-      try { await peer.addIceCandidate(new RTCIceCandidate(data.candidate)); }
-      catch(e){ console.log("Ошибка ICE:", e); }
-    }
-
+    if (data.candidate && peer) try { await peer.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){console.log(e);}
     if (data.type === "chat") appendMessage("Собеседник", data.message);
     if (data.type === "leave") stopCall();
   };
@@ -67,15 +56,11 @@ function stopCall() {
   stopBtn.style.display = "none";
   nextBtn.style.display = "none";
   startBtn.style.display = "inline-block";
-  muteMicBtn.style.display = "none";
-
-  startBtn.disabled = false;
-
-  [flipBtn, reportBtn, giftBtn, likeBtn, muteBtn].forEach(b => b.style.display = "none");
+  [flipBtn, reportBtn, giftBtn, likeBtn, muteBtn, muteMicBtn].forEach(b => b.style.display = "none");
 
   if(peer){ peer.close(); peer = null; }
   if(socket){ socket.close(); socket = null; }
-  if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
+  if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
 
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
@@ -90,14 +75,8 @@ function createPeer(isCaller) {
   peer = new RTCPeerConnection(config);
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
   peer.ontrack = (e) => remoteVideo.srcObject = e.streams[0];
-  peer.onicecandidate = (e) => { if (e.candidate) socket.send(JSON.stringify({ candidate: e.candidate })); };
-
-  if (isCaller) {
-    peer.createOffer().then(offer => {
-      peer.setLocalDescription(offer);
-      socket.send(JSON.stringify({ sdp: offer }));
-    });
-  }
+  peer.onicecandidate = (e) => { if(e.candidate) socket.send(JSON.stringify({ candidate: e.candidate })); };
+  if(isCaller) peer.createOffer().then(o => { peer.setLocalDescription(o); socket.send(JSON.stringify({ sdp:o })); });
 }
 
 // ======== Чат ========
@@ -108,14 +87,13 @@ function appendMessage(sender, text){
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 sendBtn.onclick = sendMessage;
-chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
+chatInput.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
   appendMessage("Вы", msg);
-  socket.send(JSON.stringify({ type: "chat", message: msg }));
+  socket.send(JSON.stringify({ type:"chat", message:msg }));
   chatInput.value = "";
 }
 
@@ -124,15 +102,15 @@ flipBtn.onclick = async () => {
   if(!localStream) return;
   try {
     const facingMode = usingFrontCamera ? "environment" : "user";
-    localStream.getTracks().forEach(t => t.stop());
-    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
+    localStream.getTracks().forEach(t=>t.stop());
+    localStream = await navigator.mediaDevices.getUserMedia({ video:{facingMode}, audio:true });
     localVideo.srcObject = localStream;
     if(peer){
-      const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
-      if(sender) await sender.replaceTrack(localStream.getVideoTracks()[0]);
+      const sender = peer.getSenders().find(s=>s.track&&s.track.kind==='video');
+      if(sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
     }
     usingFrontCamera = !usingFrontCamera;
-  } catch(err) { console.error("Ошибка переключения камеры:", err); }
+  } catch(err){ console.error("Ошибка переключения камеры:", err); }
 };
 
 // ======== Остальные кнопки ========
