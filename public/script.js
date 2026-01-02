@@ -13,7 +13,7 @@ const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Запуск видео и WebSocket ========
+// ======== Видео и WebSocket ========
 startBtn.onclick = async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
@@ -108,5 +108,5 @@ document.addEventListener('touchmove', e => {
   }
 });
 
-// ======== Автопрокрутка чата при фокусе на input ========
+// ======== Автоскролл чата при фокусе на input ========
 chatInput.addEventListener("focus", () => { setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 300); });
