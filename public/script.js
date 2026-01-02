@@ -1,122 +1,159 @@
-body, html {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  font-family: Arial, sans-serif;
-  background: #1a1a1a;
-  color: white;
-  overflow: hidden;
+let localStream;
+let peer;
+let socket;
+
+const localVideo = document.getElementById("localVideo");
+const remoteVideo = document.getElementById("remoteVideo");
+const startBtn = document.getElementById("startBtn");
+const stopBtn = document.getElementById("stopBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+const chatInput = document.getElementById("chatInput");
+const chatMessages = document.getElementById("chatMessages");
+const sendBtn = document.getElementById("sendBtn");
+
+// Новые кнопки
+const flipBtn = document.getElementById("flipBtn");
+const reportBtn = document.getElementById("reportBtn");
+const giftBtn = document.getElementById("giftBtn");
+const likeBtn = document.getElementById("likeBtn");
+const muteBtn = document.getElementById("muteBtn");
+
+const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+// ======== Старт звонка ========
+async function startCall() {
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+
+  startBtn.style.display = "none";
+  stopBtn.style.display = "inline-block";
+  nextBtn.style.display = "inline-block";
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localVideo.srcObject = localStream;
+  } catch (e) {
+    console.error("Не удалось получить камеру/микрофон:", e);
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    startBtn.style.display = "inline-block";
+    stopBtn.style.display = "none";
+    nextBtn.style.display = "none";
+    return;
+  }
+
+  socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
+
+  socket.onmessage = async (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === "match") setTimeout(() => createPeer(data.role === "caller"), 100);
+
+    if (data.sdp && peer) {
+      await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      if (data.sdp.type === "offer") {
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+        socket.send(JSON.stringify({ sdp: peer.localDescription }));
+      }
+    }
+
+    if (data.candidate && peer) {
+      try { await peer.addIceCandidate(new RTCIceCandidate(data.candidate)); }
+      catch(e){ console.log("Ошибка ICE:", e); }
+    }
+
+    if (data.type === "chat") appendMessage("Собеседник", data.message);
+    if (data.type === "leave") stopCall();
+  };
 }
 
-.videos-container {
-  display: flex;
-  height: 60vh;
-  padding: 2px;
-  box-sizing: border-box;
+startBtn.onclick = startCall;
+
+// ======== Завершить звонок ========
+function stopCall() {
+  stopBtn.style.display = "none";
+  nextBtn.style.display = "none";
+  startBtn.style.display = "inline-block";
+  startBtn.disabled = false;
+
+  if(peer) { peer.close(); peer = null; }
+  if(socket) { socket.close(); socket = null; }
+  if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+
+  localVideo.srcObject = null;
+  remoteVideo.srcObject = null;
+  chatMessages.innerHTML = "";
 }
 
-.local-video-wrapper {
-  position: relative;
-  width: 50%;
-  margin: 2px;
+stopBtn.onclick = stopCall;
+
+// ======== Next кнопка ========
+nextBtn.onclick = () => console.log("Следующий нажата");
+
+// ======== Peer ========
+function createPeer(isCaller) {
+  peer = new RTCPeerConnection(config);
+  localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
+  peer.ontrack = (e) => remoteVideo.srcObject = e.streams[0];
+  peer.onicecandidate = (e) => { if (e.candidate) socket.send(JSON.stringify({ candidate: e.candidate })); };
+
+  if (isCaller) {
+    peer.createOffer().then(offer => {
+      peer.setLocalDescription(offer);
+      socket.send(JSON.stringify({ sdp: offer }));
+    });
+  }
 }
 
-.local-video-wrapper video {
-  width: 100%;
-  height: 100%;
-  background: black;
-  border-radius: 5px;
-  object-fit: cover;
+// ======== Чат ========
+function appendMessage(sender, text){
+  const div = document.createElement("div");
+  div.className = "chat-message";
+  div.textContent = `${sender}: ${text}`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-.controls {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  z-index: 10;
+function sendMessage(){
+  const msg = chatInput.value.trim();
+  if(!msg) return;
+  appendMessage("Вы", msg);
+  socket.send(JSON.stringify({ type: "chat", message: msg }));
+  chatInput.value = "";
 }
 
-.controls button {
-  background: rgba(255,255,255,0.2);
-  border: none;
-  border-radius: 50%;
-  padding: 5px;
-  font-size: 18px;
-  cursor: pointer;
-  opacity: 0.8;
-  margin: 2px;
-  transition: opacity 0.2s;
-}
+sendBtn.onclick = sendMessage;
+chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-.controls button:hover { opacity: 1; }
+// ======== Новые кнопки ========
+flipBtn.onclick = async () => {
+  if (!localStream) return;
+  const videoTrack = localStream.getVideoTracks()[0];
+  if(videoTrack) {
+    const constraints = videoTrack.getConstraints();
+    const facingMode = constraints.facingMode === "user" ? "environment" : "user";
+    videoTrack.applyConstraints({ facingMode });
+  }
+};
+reportBtn.onclick = () => console.log("Жалоба нажата");
+giftBtn.onclick = () => console.log("Подарок нажата");
+likeBtn.onclick = () => console.log("Лайк нажата");
+muteBtn.onclick = () => {
+  if (!localStream) return;
+  const track = localStream.getAudioTracks()[0];
+  if(track) track.enabled = !track.enabled;
+};
 
-#flipBtn { top: 5px; right: 5px; position: absolute; }
-#startBtn { bottom: 5px; right: 5px; position: absolute; }
-#stopBtn { bottom: 5px; right: 5px; position: absolute; }
-#nextBtn { bottom: 5px; right: 50px; position: absolute; }
+// ======== Pull-to-refresh ========
+let touchStartY = 0;
+document.addEventListener('touchstart', e => { if(e.touches.length === 1) touchStartY = e.touches[0].clientY; });
+document.addEventListener('touchmove', e => {
+  if(e.touches.length === 1){
+    const touchEndY = e.touches[0].clientY;
+    if(touchEndY - touchStartY > 100) location.reload();
+  }
+});
 
-.remote-video-wrapper { position: relative; width: 50%; margin: 2px; }
-.remote-video-wrapper video {
-  width: 100%;
-  height: 100%;
-  background: black;
-  border-radius: 5px;
-  object-fit: cover;
-}
-
-.remote-controls { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
-#likeBtn { top: 5px; left: 5px; position: absolute; }
-#reportBtn { top: 5px; right: 5px; position: absolute; }
-#muteBtn { top: 50px; right: 5px; position: absolute; }
-#giftBtn { bottom: 5px; left: 5px; position: absolute; }
-
-.chat-container {
-  height: 40vh;
-  background: #222;
-  padding: 5px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.chat-messages {
-  height: 100%;
-  overflow-y: auto;
-  padding: 5px;
-  border: 1px solid #555;
-  border-radius: 5px;
-}
-
-.chat-message { margin: 2px 0; }
-
-.chat-input-fixed {
-  position: fixed;
-  bottom: env(safe-area-inset-bottom, 0);
-  left: 0;
-  width: 100%;
-  display: flex;
-  background: #222;
-  padding: 5px;
-  box-sizing: border-box;
-}
-
-.chat-input-fixed input {
-  flex: 1;
-  padding: 8px;
-  border-radius: 5px 0 0 5px;
-  border: none;
-  outline: none;
-}
-
-.chat-input-fixed button {
-  padding: 8px 15px;
-  border: none;
-  background: #555;
-  color: white;
-  border-radius: 0 5px 5px 0;
-  cursor: pointer;
-}
-
-.chat-input-fixed button:hover { background: #777; }
+// ======== Автоскролл чата ========
+chatInput.addEventListener("focus", () => { setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 300); });
