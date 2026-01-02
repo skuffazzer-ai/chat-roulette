@@ -7,17 +7,17 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Чат-рулетка</h1>
-  <div id="videos">
-    <video id="localVideo" autoplay muted playsinline></video>
-    <video id="remoteVideo" autoplay playsinline></video>
-  </div>
-  <div id="controls">
-    <button id="startButton">Начать</button>
-    <button id="endButton">Закончить</button>
-  </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
+<h2>Чат-рулетка</h2>
+
+<div class="videos">
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+</div>
+
+<button id="startBtn">Начать</button>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
