@@ -83,12 +83,33 @@ body, html {
   pointer-events: none;
 }
 
+/* Анимация сообщений поверх видео */
 .chat-overlay .chat-message {
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.8);
   font-size: 14px;
   background: rgba(0,0,0,0.2);
-  padding: 2px 5px;
-  border-radius: 3px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin: 2px 0;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: floatIn 0.5s forwards;
+}
+
+/* Плавное появление */
+@keyframes floatIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Плавное исчезновение */
+@keyframes floatOut {
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
 }
 
 /* Стандартный чат под видео */
