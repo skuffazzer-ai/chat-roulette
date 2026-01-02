@@ -5,32 +5,38 @@ const io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-const ROOM_ID = 'room1';
+let readyUsers = [];
 
-io.on('connection', (socket) => {
-  console.log('Пользователь подключился:', socket.id);
-  socket.join(ROOM_ID);
+io.on('connection', socket => {
+  console.log('Подключился:', socket.id);
 
-  // Сообщаем другим, что появился новый пользователь
-  socket.to(ROOM_ID).emit('user-joined', socket.id);
+  socket.on('ready', () => {
+    if (!readyUsers.includes(socket.id)) {
+      readyUsers.push(socket.id);
+    }
 
-  socket.on('offer', (offer) => {
-    socket.to(ROOM_ID).emit('offer', offer);
+    if (readyUsers.length === 2) {
+      io.to(readyUsers[0]).emit('initiate-call', true);
+      io.to(readyUsers[1]).emit('initiate-call', false);
+    }
   });
 
-  socket.on('answer', (answer) => {
-    socket.to(ROOM_ID).emit('answer', answer);
+  socket.on('offer', data => {
+    socket.broadcast.emit('offer', data);
   });
 
-  socket.on('ice-candidate', (candidate) => {
-    socket.to(ROOM_ID).emit('ice-candidate', candidate);
+  socket.on('answer', data => {
+    socket.broadcast.emit('answer', data);
+  });
+
+  socket.on('ice-candidate', data => {
+    socket.broadcast.emit('ice-candidate', data);
   });
 
   socket.on('disconnect', () => {
-    console.log('Пользователь отключился:', socket.id);
-    socket.to(ROOM_ID).emit('user-left', socket.id);
+    readyUsers = readyUsers.filter(id => id !== socket.id);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
+http.listen(PORT, () => console.log('Server running on port', PORT));
