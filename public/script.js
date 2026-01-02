@@ -1,22 +1,15 @@
 const socket = io();
 const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
-const startButton = document.getElementById('startButton');
-const endButton = document.getElementById('endButton');
+const startBtn = document.getElementById('startBtn');
 
 let localStream;
-let peerConnection;
+let pc;
 let isCaller = false;
 
-const configuration = {
+const config = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-
-    {
-      urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
-    },
     {
       urls: 'turn:openrelay.metered.ca:443',
       username: 'openrelayproject',
@@ -25,92 +18,59 @@ const configuration = {
   ]
 };
 
+async function initMedia() {
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: true
+  });
+  localVideo.srcObject = localStream;
+}
 
-// Получаем локальный поток
-async function initLocalStream() {
-  if (!localStream) {
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      localVideo.srcObject = localStream;
-    } catch (err) {
-      console.error('Ошибка доступа к камере/микрофону:', err);
-      alert('Разрешите доступ к камере и микрофону');
+function createPC() {
+  pc = new RTCPeerConnection(config);
+
+  localStream.getTracks().forEach(track =>
+    pc.addTrack(track, localStream)
+  );
+
+  pc.ontrack = e => {
+    remoteVideo.srcObject = e.streams[0];
+  };
+
+  pc.onicecandidate = e => {
+    if (e.candidate) {
+      socket.emit('ice-candidate', e.candidate);
     }
-  }
-}
-
-// Создаем PeerConnection
-function createPeerConnection() {
-  if (peerConnection) return;
-
-  peerConnection = new RTCPeerConnection(configuration);
-
-  peerConnection.ontrack = (event) => {
-    remoteVideo.srcObject = event.streams[0];
   };
-
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate) socket.emit('ice-candidate', event.candidate);
-  };
-
-  if (localStream) {
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-  }
 }
 
-// Начало звонка (для инициатора)
-async function startCall() {
-  isCaller = true;
-  await initLocalStream();
-  createPeerConnection();
+startBtn.onclick = async () => {
+  await initMedia();
+  socket.emit('ready');
+};
 
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-  socket.emit('offer', offer);
-}
+socket.on('initiate-call', async caller => {
+  isCaller = caller;
+  createPC();
 
-// Завершение звонка
-function endCall() {
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
+  if (isCaller) {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit('offer', offer);
   }
-  if (localStream) {
-    localStream.getTracks().forEach(track => track.stop());
-    localStream = null;
-  }
-  localVideo.srcObject = null;
-  remoteVideo.srcObject = null;
-  isCaller = false;
-}
+});
 
-// Приход offer (второй пользователь подключается автоматически)
-socket.on('offer', async (offer) => {
-  await initLocalStream();
-  createPeerConnection();
-
-  await peerConnection.setRemoteDescription(offer);
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
+socket.on('offer', async offer => {
+  await pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
   socket.emit('answer', answer);
 });
 
-// Приход answer (инициатор)
-socket.on('answer', async (answer) => {
-  if (peerConnection) await peerConnection.setRemoteDescription(answer);
+socket.on('answer', answer => {
+  pc.setRemoteDescription(answer);
 });
 
-// ICE-кандидаты
-socket.on('ice-candidate', async (candidate) => {
-  if (peerConnection) {
-    try {
-      await peerConnection.addIceCandidate(candidate);
-    } catch (err) {
-      console.error('Ошибка добавления ICE-кандидата:', err);
-    }
-  }
+socket.on('ice-candidate', candidate => {
+  pc.addIceCandidate(candidate);
 });
-
-// События кнопок
-startButton.addEventListener('click', startCall);
-endButton.addEventListener('click', endCall);
