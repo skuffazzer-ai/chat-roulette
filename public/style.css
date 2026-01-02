@@ -30,34 +30,41 @@ video {
   object-fit: cover;
 }
 
+/* Все кнопки одинаковые миниатюрные */
 .controls button {
   font-size: 18px;
   padding: 5px;
   border-radius: 4px;
-  background: rgba(0,0,0,0.6); /* 80% прозрачность */
+  background: rgba(0,0,0,0.6);
   color: white;
   border: none;
   cursor: pointer;
   transition: background 0.2s;
 }
 
-.controls button:hover {
-  background: rgba(0,0,0,0.85);
-}
+.controls button:hover { background: rgba(0,0,0,0.85); }
 
 /* Локальная камера */
-#startBtn { position: absolute; bottom: 10px; right: 10px; display: inline-block; }
-#stopBtn { position: absolute; bottom: 10px; right: 10px; display: none; }
-#nextBtn { position: absolute; bottom: 10px; right: 50px; display: none; }
-#muteMicBtn { position: absolute; top: 10px; left: 10px; display: none; }
-#flipBtn { position: absolute; top: 10px; right: 10px; display: none; }
+#startBtn { position: absolute; bottom: 10px; right: 10px; }
+#stopBtn { position: absolute; bottom: 10px; right: 10px; }
+#nextBtn { position: absolute; bottom: 10px; right: 50px; }
+#muteMicBtn { position: absolute; top: 10px; left: 10px; }
+#flipBtn { position: absolute; top: 10px; right: 10px; }
 
 /* Камера собеседника */
-#reportBtn { position: absolute; top: 10px; right: 10px; display: none; }
-#giftBtn { position: absolute; bottom: 10px; left: 10px; display: none; }
-#likeBtn { position: absolute; top: 10px; left: 10px; display: none; }
-#muteBtn { position: absolute; top: 50px; right: 10px; display: none; }
+#reportBtn { position: absolute; top: 10px; right: 10px; }
+#giftBtn { position: absolute; bottom: 10px; left: 10px; }
+#likeBtn { position: absolute; top: 10px; left: 10px; }
+#muteBtn { position: absolute; top: 50px; right: 10px; }
 
+/* Изначально скрыты, используем visibility для iOS */
+#stopBtn, #nextBtn, #flipBtn, #muteMicBtn, #reportBtn, #giftBtn, #likeBtn, #muteBtn {
+  visibility: hidden;
+}
+
+.controls button.visible { visibility: visible; }
+
+/* Чат */
 .chat-container {
   height: 40vh;
   background: #222;
