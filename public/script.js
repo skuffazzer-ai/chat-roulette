@@ -118,6 +118,12 @@ function appendMessage(sender, text){
     const clone = msgDiv.cloneNode(true);
     chatOverlay.appendChild(clone);
     chatOverlay.scrollTop = chatOverlay.scrollHeight;
+
+    // Через 3 секунды плавно исчезаем
+    setTimeout(() => {
+      clone.style.animation = "floatOut 0.5s forwards";
+      setTimeout(() => clone.remove(), 500);
+    }, 3000);
   }
 
   // Стандартный чат
