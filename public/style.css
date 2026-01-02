@@ -46,12 +46,18 @@ video {
   background: rgba(0,0,0,0.85);
 }
 
+/* Локальная камера */
+#startBtn { position: absolute; bottom: 5px; right: 5px; }
+#stopBtn { position: absolute; bottom: 5px; right: 5px; display: none; }
+#nextBtn { position: absolute; bottom: 5px; right: 80px; display: none; }
 #muteMicBtn { position: absolute; top: 5px; left: 5px; display: none; }
-#flipBtn { position: absolute; top: 5px; right: 5px; }
-#reportBtn { position: absolute; top: 5px; right: 5px; }
-#giftBtn { position: absolute; bottom: 5px; left: 5px; }
-#likeBtn { position: absolute; top: 5px; left: 5px; }
-#muteBtn { position: absolute; top: 45px; right: 5px; }
+
+/* Камера собеседника */
+#flipBtn { position: absolute; top: 5px; right: 5px; display: none; }
+#reportBtn { position: absolute; top: 5px; right: 5px; display: none; }
+#giftBtn { position: absolute; bottom: 5px; left: 5px; display: none; }
+#likeBtn { position: absolute; top: 5px; left: 5px; display: none; }
+#muteBtn { position: absolute; top: 45px; right: 5px; display: none; }
 
 .chat-container {
   height: 40vh;
