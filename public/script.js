@@ -28,8 +28,9 @@ startBtn.onclick = async () => {
     const data = JSON.parse(event.data);
 
     if (data.type === "match") {
-      createPeer(true);
-    }
+  createPeer(data.role === "caller");
+}
+
 
     if (data.sdp) {
       await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
