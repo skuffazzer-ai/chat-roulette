@@ -9,10 +9,10 @@ body, html {
   overflow: hidden;
 }
 
-/* Видео */
+/* Видеопанель — верхние 60% экрана */
 .videos-container {
   display: flex;
-  flex: 0.6;
+  height: 60vh; /* ровно 60% экрана */
   padding: 2px;
   box-sizing: border-box;
 }
@@ -31,6 +31,7 @@ body, html {
   object-fit: cover;
 }
 
+/* Кнопки фиксированные в правом верхнем углу локальной камеры */
 .controls {
   position: absolute;
   top: 5px;
@@ -66,13 +67,12 @@ body, html {
   object-fit: cover;
 }
 
-/* Чат */
+/* Чат — нижние 40% экрана */
 .chat-container {
-  flex: 0.4;
-  height: 40%;
+  height: 40vh; /* ровно 40% экрана */
+  background: #222;
   padding: 5px;
   box-sizing: border-box;
-  background: #222;
   overflow: hidden;
 }
 
@@ -84,7 +84,11 @@ body, html {
   border-radius: 5px;
 }
 
-/* Поле ввода — фиксированное */
+.chat-message {
+  margin: 2px 0;
+}
+
+/* Поле ввода — фиксированное внизу, видно всегда */
 .chat-input-fixed {
   position: fixed;
   bottom: env(safe-area-inset-bottom, 0);
@@ -113,6 +117,4 @@ body, html {
   cursor: pointer;
 }
 
-.chat-input-fixed button:hover {
-  background: #777;
-}
+.chat-input-fixed button:hover { background: #777; }
