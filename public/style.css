@@ -16,13 +16,13 @@ body, html {
   box-sizing: border-box;
 }
 
-.local-video-wrapper {
+.local-video-wrapper, .remote-video-wrapper {
   position: relative;
   width: 50%;
   margin: 2px;
 }
 
-.local-video-wrapper video {
+.local-video-wrapper video, .remote-video-wrapper video {
   width: 100%;
   height: 100%;
   background: black;
@@ -30,21 +30,9 @@ body, html {
   object-fit: cover;
 }
 
-.controls {
+/* Кнопки внутри своих видео */
+.local-video-wrapper button, .remote-video-wrapper button {
   position: absolute;
-  display: flex;
-  flex-direction: column;
-  z-index: 10;
-}
-
-/* Местоположение кнопок */
-#flipBtn { top: 5px; right: 5px; display: none; }
-#micBtn { top: 50px; right: 5px; display: none; }
-#startBtn { bottom: 5px; right: 5px; display: block; }
-#stopBtn { bottom: 5px; right: 5px; display: none; }
-#nextBtn { bottom: 5px; right: 70px; display: none; }
-
-.controls button {
   padding: 5px 8px;
   font-size: 14px;
   border: none;
@@ -52,47 +40,25 @@ body, html {
   cursor: pointer;
   background: rgba(85, 85, 85, 0.8);
   color: white;
-}
-.controls button:hover { background: rgba(119, 119, 119, 0.8); }
-
-.remote-video-wrapper {
-  width: 50%;
-  position: relative;
-  margin: 2px;
+  display: none;
 }
 
-.remote-video-wrapper video {
-  width: 100%;
-  height: 100%;
-  background: black;
-  border-radius: 5px;
-  object-fit: cover;
+.local-video-wrapper button:hover, .remote-video-wrapper button:hover {
+  background: rgba(119, 119, 119, 0.8);
 }
 
-.remote-controls {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  z-index: 10;
-}
+/* Моя камера */
+#flipBtn { top: 5px; right: 5px; }
+#micBtn { top: 50px; right: 5px; }
+#startBtn { bottom: 5px; right: 5px; display: block; } /* видна сразу */
+#stopBtn { bottom: 5px; right: 5px; }
+#nextBtn { bottom: 5px; right: 70px; }
 
-/* Местоположение кнопок собеседника */
-#likeBtn { top: 5px; left: 5px; display: none; }
-#reportBtn { top: 5px; right: 5px; display: none; }
-#muteBtn { top: 50px; right: 5px; display: none; }
-#giftBtn { bottom: 5px; left: 5px; display: none; }
-
-.remote-controls button {
-  padding: 5px 8px;
-  font-size: 14px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background: rgba(85, 85, 85, 0.8);
-  color: white;
-}
-.remote-controls button:hover { background: rgba(119, 119, 119, 0.8); }
+/* Камера собеседника */
+#likeBtn { top: 5px; left: 5px; }
+#reportBtn { top: 5px; right: 5px; }
+#muteBtn { top: 50px; right: 5px; }
+#giftBtn { bottom: 5px; left: 5px; }
 
 .chat-container {
   height: 40vh;
@@ -110,9 +76,7 @@ body, html {
   border-radius: 5px;
 }
 
-.chat-message {
-  margin: 2px 0;
-}
+.chat-message { margin: 2px 0; }
 
 .chat-input-fixed {
   position: fixed;
