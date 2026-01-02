@@ -18,11 +18,9 @@ startBtn.onclick = async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
 
-  // Получаем локальное видео
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   localVideo.srcObject = localStream;
 
-  // Подключение к серверу
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
 
   socket.onmessage = async (event) => {
@@ -79,6 +77,7 @@ function appendMessage(sender, text){
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// Отправка сообщений
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
@@ -114,8 +113,13 @@ document.addEventListener('touchstart', e => {
 document.addEventListener('touchmove', e => {
   if(e.touches.length === 1){
     const touchEndY = e.touches[0].clientY;
-    if(touchEndY - touchStartY > 100) { // свайп вниз > 100px
+    if(touchEndY - touchStartY > 100) {
       location.reload();
     }
   }
+});
+
+// ======== Автопрокрутка чата при фокусе на input ========
+chatInput.addEventListener("focus", () => {
+  setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 300);
 });
