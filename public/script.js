@@ -13,7 +13,7 @@ const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Запуск видео и WS ========
+// ======== Запуск видео и WebSocket ========
 startBtn.onclick = async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
@@ -51,14 +51,9 @@ startBtn.onclick = async () => {
 // ======== Peer ========
 function createPeer(isCaller) {
   peer = new RTCPeerConnection(config);
-
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
-
   peer.ontrack = (e) => remoteVideo.srcObject = e.streams[0];
-
-  peer.onicecandidate = (e) => {
-    if (e.candidate) socket.send(JSON.stringify({ candidate: e.candidate }));
-  };
+  peer.onicecandidate = (e) => { if (e.candidate) socket.send(JSON.stringify({ candidate: e.candidate })); };
 
   if (isCaller) {
     peer.createOffer().then(offer => {
@@ -77,7 +72,6 @@ function appendMessage(sender, text){
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Отправка сообщений
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
@@ -104,22 +98,15 @@ function stop(){
   chatMessages.innerHTML = "";
 }
 
-// ======== Pull-to-refresh для мобильных ========
+// ======== Pull-to-refresh ========
 let touchStartY = 0;
-document.addEventListener('touchstart', e => {
-  if(e.touches.length === 1) touchStartY = e.touches[0].clientY;
-});
-
+document.addEventListener('touchstart', e => { if(e.touches.length === 1) touchStartY = e.touches[0].clientY; });
 document.addEventListener('touchmove', e => {
   if(e.touches.length === 1){
     const touchEndY = e.touches[0].clientY;
-    if(touchEndY - touchStartY > 100) {
-      location.reload();
-    }
+    if(touchEndY - touchStartY > 100) location.reload();
   }
 });
 
 // ======== Автопрокрутка чата при фокусе на input ========
-chatInput.addEventListener("focus", () => {
-  setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 300);
-});
+chatInput.addEventListener("focus", () => { setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 300); });
