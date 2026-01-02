@@ -33,15 +33,12 @@ wss.on("connection", (ws) => {
       try {
         const data = JSON.parse(msg.toString());
 
-        // Если текстовое сообщение, пересылаем как есть
         if (data.type === "chat") {
           ws.partner.send(JSON.stringify({ type: "chat", message: data.message }));
         } else {
-          // Всё остальное (WebRTC sdp, candidate) пересылаем напрямую
           ws.partner.send(msg.toString());
         }
-
-      } catch(e){
+      } catch (e) {
         console.log("Ошибка при обработке сообщения:", e);
       }
     }
