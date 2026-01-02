@@ -11,7 +11,7 @@ body, html {
 
 .videos-container {
   display: flex;
-  height: 50vh; /* камеры сверху */
+  height: 60vh;
   padding: 2px;
   box-sizing: border-box;
 }
@@ -38,13 +38,13 @@ body, html {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  background: rgba(85, 85, 85, 0.8);
+  background: rgba(85,85,85,0.8);
   color: white;
   display: none;
 }
 
 .local-video-wrapper button:hover, .remote-video-wrapper button:hover {
-  background: rgba(119, 119, 119, 0.8);
+  background: rgba(119,119,119,0.8);
 }
 
 /* Позиции кнопок */
@@ -59,55 +59,35 @@ body, html {
 #muteBtn { top: 50px; right: 5px; }
 #giftBtn { bottom: 5px; left: 5px; }
 
-/* Плавающий чат поверх видео */
-.chat-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 50vh;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none; /* кнопки остаются кликабельными */
-}
-
-#chatOverlayMessages {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-/* Анимация сообщений */
-.chat-overlay .chat-message {
-  color: rgba(255,255,255,0.8);
-  font-size: 14px;
-  background: rgba(0,0,0,0.2);
-  padding: 3px 6px;
-  border-radius: 4px;
-  margin: 2px 0;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: floatIn 0.5s forwards;
-}
-
-@keyframes floatIn {
-  to { opacity:1; transform: translateY(0); }
-}
-@keyframes floatOut {
-  to { opacity:0; transform: translateY(-20px); }
-}
-
-/* Стандартный чат */
 .chat-container { height: 40vh; background: #222; padding: 5px; box-sizing: border-box; overflow-y: auto; }
+
 .chat-input-fixed {
-  position: absolute; bottom: 0; left: 0; width: 100%; display: flex; background: rgba(0,0,0,0.4); padding: 5px; box-sizing: border-box;
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%;
+  display: flex;
+  background: rgba(0,0,0,0.4);
+  padding: 5px;
+  box-sizing: border-box;
 }
-.chat-input-fixed input { flex:1; padding:8px; border-radius:5px 0 0 5px; border:none; outline:none; background: rgba(255,255,255,0.1); color:white;}
-.chat-input-fixed button { padding:8px 15px; border:none; background: rgba(85,85,85,0.8); color:white; border-radius:0 5px 5px 0; cursor:pointer;}
-.chat-input-fixed button:hover {background: rgba(119,119,119,0.8);}
+
+.chat-input-fixed input {
+  flex:1;
+  padding:8px;
+  border-radius:5px 0 0 5px;
+  border:none;
+  outline:none;
+  background: rgba(255,255,255,0.1);
+  color:white;
+}
+
+.chat-input-fixed button {
+  padding:8px 15px;
+  border:none;
+  background: rgba(85,85,85,0.8);
+  color:white;
+  border-radius:0 5px 5px 0;
+  cursor:pointer;
+}
+
+.chat-input-fixed button:hover { background: rgba(119,119,119,0.8); }
