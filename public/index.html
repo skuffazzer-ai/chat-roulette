@@ -3,16 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Видео чат-рулетка</title>
+<title>Чат-рулетка</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Видео чат-рулетка</h1>
+  <h1>Чат-рулетка</h1>
   <div id="videos">
     <video id="localVideo" autoplay muted playsinline></video>
     <video id="remoteVideo" autoplay playsinline></video>
   </div>
-  <button id="startButton">Начать</button>
+  <div id="controls">
+    <button id="startButton">Начать</button>
+    <button id="endButton">Закончить</button>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
