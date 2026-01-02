@@ -19,15 +19,13 @@ const config = {
   ]
 };
 
-async function initMedia() {
+async function startMedia() {
   localStream = await navigator.mediaDevices.getUserMedia({
     video: true,
     audio: true
   });
   localVideo.srcObject = localStream;
-}
 
-function createPC() {
   pc = new RTCPeerConnection(config);
 
   localStream.getTracks().forEach(track =>
@@ -39,15 +37,12 @@ function createPC() {
   };
 
   pc.onicecandidate = e => {
-    if (e.candidate) {
-      socket.emit('ice-candidate', e.candidate);
-    }
+    if (e.candidate) socket.emit('ice-candidate', e.candidate);
   };
 }
 
 startBtn.onclick = async () => {
-  await initMedia();
-  createPC();
+  await startMedia();
 };
 
 socket.on('role', async r => {
