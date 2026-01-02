@@ -11,27 +11,25 @@
 <div class="videos-container">
   <div class="local-video-wrapper">
     <video id="localVideo" autoplay muted playsinline></video>
-
-    <!-- Кнопки моей камеры -->
-    <button id="flipBtn">🔄</button>
-    <button id="micBtn">🎤</button>
-    <button id="startBtn">▶️</button>
-    <button id="stopBtn">⏹️</button>
-    <button id="nextBtn">⏭️</button>
+    <div class="controls">
+      <button id="flipBtn" class="hidden">🔄</button>
+      <button id="micBtn" class="hidden">🎤</button>
+      <button id="startBtn">▶️</button>
+      <button id="stopBtn" class="hidden">⏹️</button>
+      <button id="nextBtn" class="hidden">⏭️</button>
+    </div>
   </div>
-
   <div class="remote-video-wrapper">
     <video id="remoteVideo" autoplay playsinline></video>
-
-    <!-- Кнопки собеседника -->
-    <button id="likeBtn">❤️</button>
-    <button id="reportBtn">⚠️</button>
-    <button id="muteBtn">🔇</button>
-    <button id="giftBtn">🎁</button>
+    <div class="remote-controls">
+      <button id="reportBtn" class="hidden">⚠️</button>
+      <button id="likeBtn" class="hidden">❤️</button>
+      <button id="muteRemoteBtn" class="hidden">🔇</button>
+      <button id="giftBtn" class="hidden">🎁</button>
+    </div>
   </div>
 </div>
 
-<!-- Стандартный чат под видео -->
 <div class="chat-container">
   <div id="chatMessages" class="chat-messages"></div>
 </div>
