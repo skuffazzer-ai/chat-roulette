@@ -19,7 +19,6 @@ const giftBtn = document.getElementById("giftBtn");
 
 const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
-const chatOverlay = document.getElementById("chatOverlayMessages");
 const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
@@ -95,21 +94,8 @@ function appendMessage(sender,text){
   const msgDiv = document.createElement("div");
   msgDiv.className="chat-message";
   msgDiv.textContent=`${sender}: ${text}`;
-
-  if(document.activeElement === chatInput){
-    const clone = msgDiv.cloneNode(true);
-    chatOverlay.appendChild(clone);
-    chatOverlay.scrollTop = chatOverlay.scrollHeight;
-
-    setTimeout(()=>{
-      clone.style.animation="floatOut 0.5s forwards";
-      setTimeout(()=>clone.remove(),500);
-    },3000);
-
-  } else {
-    chatMessages.appendChild(msgDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
+  chatMessages.appendChild(msgDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function sendMessage(){
@@ -118,21 +104,7 @@ function sendMessage(){
   if(socket) socket.send(JSON.stringify({type:"chat",message:msg}));
   appendMessage("Вы", msg);
   chatInput.value="";
-  chatInput.focus();
 }
-
-// ===== Клавиатура =====
-chatInput.addEventListener("focus", ()=>{
-  document.body.style.overflow="hidden";
-  chatMessages.style.display="none";
-  chatOverlay.style.display="flex";
-});
-chatInput.addEventListener("blur", ()=>{
-  document.body.style.overflow="hidden";
-  chatMessages.style.display="block";
-  chatOverlay.style.display="none";
-  chatOverlay.innerHTML="";
-});
 
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e=>{ if(e.key==="Enter") sendMessage(); });
@@ -147,5 +119,4 @@ function stopCall(){
   localVideo.srcObject=null;
   remoteVideo.srcObject=null;
   chatMessages.innerHTML="";
-  chatOverlay.innerHTML="";
 }
