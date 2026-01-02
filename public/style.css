@@ -36,24 +36,28 @@ body, html {
   right: 5px;
   display: flex;
   flex-direction: column;
+  gap: 5px;
   z-index: 10;
 }
 
 .controls button {
-  padding: 5px 10px;
-  margin: 2px 0;
+  padding: 5px 8px;
   font-size: 14px;
-  cursor: pointer;
   border: none;
-  border-radius: 3px;
-  background: #555;
+  border-radius: 5px;
+  cursor: pointer;
+  background: rgba(85, 85, 85, 0.8);
   color: white;
 }
+.controls button:hover { background: rgba(119, 119, 119, 0.8); }
 
-.controls button:hover { background: #777; }
+#startBtn, #stopBtn, #nextBtn {
+  margin-top: 5px;
+}
 
 .remote-video-wrapper {
   width: 50%;
+  position: relative;
   margin: 2px;
 }
 
@@ -64,6 +68,27 @@ body, html {
   border-radius: 5px;
   object-fit: cover;
 }
+
+.remote-controls {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  top: 5px;
+  left: 5px;
+  z-index: 10;
+}
+
+.remote-controls button {
+  padding: 5px 8px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: rgba(85, 85, 85, 0.8);
+  color: white;
+}
+.remote-controls button:hover { background: rgba(119, 119, 119, 0.8); }
 
 .chat-container {
   height: 40vh;
