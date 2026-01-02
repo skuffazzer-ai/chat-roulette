@@ -20,9 +20,10 @@ wss.on("connection", (ws) => {
     ws.partner = waitingUser;
     waitingUser.partner = ws;
 
-    ws.send(JSON.stringify({ type: "match" }));
-    waitingUser.send(JSON.stringify({ type: "match" }));
+    ws.send(JSON.stringify({ type: "match", role: "caller" }));
+waitingUser.send(JSON.stringify({ type: "match", role: "callee" }));
 
+  
     waitingUser = null;
   } else {
     waitingUser = ws;
