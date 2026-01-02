@@ -34,10 +34,10 @@ body, html {
 /* Кнопки локального видео */
 .controls {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
   z-index: 10;
 }
 
@@ -49,7 +49,7 @@ body, html {
   font-size: 18px;
   cursor: pointer;
   opacity: 0.8;
-  margin: 2px 0;
+  margin: 2px;
   transition: opacity 0.2s;
 }
 
@@ -59,10 +59,10 @@ body, html {
 #flipBtn { top: 5px; right: 5px; position: absolute; }
 /* Start – правый нижний угол */
 #startBtn { bottom: 5px; right: 5px; position: absolute; }
-/* Stop заменяет Start */
-#stopBtn { bottom: 5px; right: 5px; position: absolute; display:none; }
+/* Stop – на месте Start */
+#stopBtn { bottom: 5px; right: 5px; position: absolute; }
 /* Next – слева от Stop */
-#nextBtn { bottom: 5px; right: 50px; position: absolute; display:none; }
+#nextBtn { bottom: 5px; right: 50px; position: absolute; }
 
 /* Камера собеседника */
 .remote-video-wrapper { position: relative; width: 50%; margin: 2px; }
@@ -74,7 +74,8 @@ body, html {
   object-fit: cover;
 }
 
-.remote-controls { position: absolute; top: 5px; left: 5px; width: 100%; height: 100%; }
+/* Кнопки собеседника */
+.remote-controls { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
 #likeBtn { top: 5px; left: 5px; position: absolute; }
 #reportBtn { top: 5px; right: 5px; position: absolute; }
 #muteBtn { top: 50px; right: 5px; position: absolute; }
