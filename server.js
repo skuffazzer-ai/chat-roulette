@@ -20,7 +20,6 @@ wss.on("connection", (ws) => {
     ws.partner = waitingUser;
     waitingUser.partner = ws;
 
-    // Отправляем роли
     ws.send(JSON.stringify({ type: "match", role: "caller" }));
     waitingUser.send(JSON.stringify({ type: "match", role: "callee" }));
 
@@ -32,9 +31,18 @@ wss.on("connection", (ws) => {
   ws.on("message", (msg) => {
     if (ws.partner) {
       try {
-        ws.partner.send(msg.toString());
-      } catch (e) {
-        console.log("Ошибка отправки сообщения партнеру:", e);
+        const data = JSON.parse(msg.toString());
+
+        // Если текстовое сообщение, пересылаем как есть
+        if (data.type === "chat") {
+          ws.partner.send(JSON.stringify({ type: "chat", message: data.message }));
+        } else {
+          // Всё остальное (WebRTC sdp, candidate) пересылаем напрямую
+          ws.partner.send(msg.toString());
+        }
+
+      } catch(e){
+        console.log("Ошибка при обработке сообщения:", e);
       }
     }
   });
