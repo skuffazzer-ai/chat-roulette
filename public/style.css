@@ -11,10 +11,10 @@ body, html {
   flex-direction: column;
 }
 
-/* Верхняя половина — видео */
+/* Верхняя половина экрана: видео */
 .videos-container {
   display: flex;
-  flex: 0.6;
+  flex: 0.6; /* 60% экрана */
   padding: 2px;
   box-sizing: border-box;
 }
@@ -70,9 +70,9 @@ body, html {
   object-fit: cover;
 }
 
-/* Нижняя половина — чат */
+/* Нижняя половина экрана: чат */
 .chat-container {
-  flex: 0.4;
+  flex: 0.4; /* 40% экрана */
   display: flex;
   flex-direction: column;
   padding: 5px;
@@ -80,6 +80,7 @@ body, html {
   background: #222;
 }
 
+/* Сообщения чата с прокруткой */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -93,7 +94,7 @@ body, html {
   margin: 2px 0;
 }
 
-/* Поле ввода всегда над сенсорными кнопками */
+/* Поле ввода выше сенсорной панели */
 .chat-input-wrapper {
   flex: 0 0 auto;
   padding-bottom: env(safe-area-inset-bottom, 12px);
