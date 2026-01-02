@@ -19,7 +19,7 @@ const config = {
   ]
 };
 
-async function startMedia() {
+async function init() {
   localStream = await navigator.mediaDevices.getUserMedia({
     video: true,
     audio: true
@@ -39,11 +39,12 @@ async function startMedia() {
   pc.onicecandidate = e => {
     if (e.candidate) socket.emit('ice-candidate', e.candidate);
   };
+
+  // ГОВОРИМ СЕРВЕРУ: Я ГОТОВ
+  socket.emit('ready');
 }
 
-startBtn.onclick = async () => {
-  await startMedia();
-};
+startBtn.onclick = init;
 
 socket.on('role', async r => {
   role = r;
