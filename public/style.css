@@ -31,9 +31,8 @@ video {
 }
 
 .controls button {
-  padding: 5px 8px;
-  margin: 2px;
-  font-size: 16px;
+  font-size: 18px;
+  padding: 5px 6px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -47,17 +46,17 @@ video {
 }
 
 /* Локальная камера */
-#startBtn { position: absolute; bottom: 5px; right: 5px; }
-#stopBtn { position: absolute; bottom: 5px; right: 5px; display: none; }
-#nextBtn { position: absolute; bottom: 5px; right: 80px; display: none; }
-#muteMicBtn { position: absolute; top: 5px; left: 5px; display: none; }
+#startBtn { position: absolute; bottom: 10px; right: 10px; }
+#stopBtn { position: absolute; bottom: 10px; right: 10px; display: none; }
+#nextBtn { position: absolute; bottom: 10px; right: 80px; display: none; }
+#muteMicBtn { position: absolute; top: 10px; left: 10px; display: none; }
+#flipBtn { position: absolute; top: 10px; right: 10px; display: none; }
 
 /* Камера собеседника */
-#flipBtn { position: absolute; top: 5px; right: 5px; display: none; }
-#reportBtn { position: absolute; top: 5px; right: 5px; display: none; }
-#giftBtn { position: absolute; bottom: 5px; left: 5px; display: none; }
-#likeBtn { position: absolute; top: 5px; left: 5px; display: none; }
-#muteBtn { position: absolute; top: 45px; right: 5px; display: none; }
+#reportBtn { position: absolute; top: 10px; right: 10px; display: none; }
+#giftBtn { position: absolute; bottom: 10px; left: 10px; display: none; }
+#likeBtn { position: absolute; top: 10px; left: 10px; display: none; }
+#muteBtn { position: absolute; top: 50px; right: 10px; display: none; }
 
 .chat-container {
   height: 40vh;
