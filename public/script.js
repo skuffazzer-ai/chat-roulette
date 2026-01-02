@@ -175,3 +175,13 @@ function stop(){
 reportBtn.onclick = () => alert("Жалоба отправлена");
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
+
+// ======== PULL-TO-REFRESH ========
+let touchStartY = 0;
+document.addEventListener('touchstart', e => { if(e.touches.length===1) touchStartY = e.touches[0].clientY; });
+document.addEventListener('touchmove', e => {
+  if(e.touches.length===1){
+    const touchEndY = e.touches[0].clientY;
+    if(touchEndY - touchStartY > 100) location.reload();
+  }
+});
