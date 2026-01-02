@@ -53,7 +53,10 @@ body, html {
 
 #startBtn, #stopBtn, #nextBtn {
   margin-top: 5px;
+  display: block;
 }
+
+.stop-hidden, .next-hidden { display: none; }
 
 .remote-video-wrapper {
   width: 50%;
