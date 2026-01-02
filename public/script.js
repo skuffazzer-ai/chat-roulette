@@ -1,80 +1,91 @@
-const socket = io();
-
-const localVideo = document.getElementById('localVideo');
-const remoteVideo = document.getElementById('remoteVideo');
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-
-let pc;
 let localStream;
-let role;
+let peer;
+let socket;
+
+const localVideo = document.getElementById("localVideo");
+const remoteVideo = document.getElementById("remoteVideo");
+const startBtn = document.getElementById("startBtn");
+const stopBtn = document.getElementById("stopBtn");
 
 const config = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' }
-  ]
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
 
-socket.on('role', async r => {
-  role = r;
-  console.log('ROLE:', role);
-});
-
 startBtn.onclick = async () => {
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: true
-  });
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
 
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   localVideo.srcObject = localStream;
 
-  pc = new RTCPeerConnection(config);
+  socket = new WebSocket(
+    location.protocol === "https:"
+      ? `wss://${location.host}`
+      : `ws://${location.host}`
+  );
 
-  /* 🔥 КРИТИЧЕСКИ ВАЖНО: addTrack ДО offer/answer */
-  localStream.getTracks().forEach(track => {
-    pc.addTrack(track, localStream);
-  });
+  socket.onmessage = async (event) => {
+    const data = JSON.parse(event.data);
 
-  pc.ontrack = e => {
-    console.log('ONTRACK');
+    if (data.type === "match") {
+      createPeer(true);
+    }
+
+    if (data.sdp) {
+      await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      if (data.sdp.type === "offer") {
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+        socket.send(JSON.stringify({ sdp: peer.localDescription }));
+      }
+    }
+
+    if (data.candidate) {
+      await peer.addIceCandidate(new RTCIceCandidate(data.candidate));
+    }
+
+    if (data.type === "leave") {
+      stop();
+    }
+  };
+};
+
+function createPeer(isCaller) {
+  peer = new RTCPeerConnection(config);
+
+  localStream.getTracks().forEach(track =>
+    peer.addTrack(track, localStream)
+  );
+
+  peer.ontrack = (e) => {
     remoteVideo.srcObject = e.streams[0];
   };
 
-  pc.onicecandidate = e => {
+  peer.onicecandidate = (e) => {
     if (e.candidate) {
-      socket.emit('ice', e.candidate);
+      socket.send(JSON.stringify({ candidate: e.candidate }));
     }
   };
 
-  if (role === 'caller') {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit('offer', offer);
+  if (isCaller) {
+    peer.createOffer().then(offer => {
+      peer.setLocalDescription(offer);
+      socket.send(JSON.stringify({ sdp: offer }));
+    });
   }
-};
+}
 
-socket.on('offer', async offer => {
-  if (!pc) startBtn.onclick();
+stopBtn.onclick = stop;
 
-  await pc.setRemoteDescription(offer);
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  socket.emit('answer', answer);
-});
+function stop() {
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
 
-socket.on('answer', async answer => {
-  await pc.setRemoteDescription(answer);
-});
+  if (peer) peer.close();
+  if (socket) socket.close();
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
 
-socket.on('ice', async candidate => {
-  if (pc) {
-    await pc.addIceCandidate(candidate);
-  }
-});
+  localVideo.srcObject = null;
+  remoteVideo.srcObject = null;
+}
 
-stopBtn.onclick = () => {
-  if (pc) pc.close();
-  if (localStream) {
-    localStream.getTracks().forEach(t => t.stop());
-  }
-};
