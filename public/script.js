@@ -23,20 +23,18 @@ const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== UTILS ========
+// ======== Получаем камеру ========
 async function getCameraStream() {
   if(localStream) localStream.getTracks().forEach(t => t.stop());
 
   const devices = await navigator.mediaDevices.enumerateDevices();
   const videoDevices = devices.filter(d => d.kind === "videoinput");
-  let targetDevice;
+  let targetDevice = videoDevices[0];
 
   if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
     targetDevice = videoDevices.find(d =>
       usingFrontCamera ? d.label.toLowerCase().includes("front") : d.label.toLowerCase().includes("back")
     ) || videoDevices[0];
-  } else {
-    targetDevice = videoDevices[0];
   }
 
   localStream = await navigator.mediaDevices.getUserMedia({
@@ -52,6 +50,7 @@ async function getCameraStream() {
   }
 }
 
+// ======== Чат ========
 function appendMessage(sender, text){
   const div = document.createElement("div");
   div.className = "chat-message";
@@ -67,6 +66,10 @@ startBtn.onclick = async () => {
   nextBtn.classList.remove("hidden");
   flipBtn.classList.remove("hidden");
   micBtn.classList.remove("hidden");
+  reportBtn.classList.remove("hidden");
+  likeBtn.classList.remove("hidden");
+  muteRemoteBtn.classList.remove("hidden");
+  giftBtn.classList.remove("hidden");
 
   await getCameraStream();
 
@@ -95,15 +98,10 @@ startBtn.onclick = async () => {
   };
 };
 
-stopBtn.onclick = () => {
-  stop();
-};
+stopBtn.onclick = stop;
+nextBtn.onclick = () => alert("Следующий пока что не реализован");
 
-nextBtn.onclick = () => {
-  alert("Следующий пока что не реализован");
-};
-
-// ======== PEER ========
+// ======== Peer ========
 function createPeer(isCaller){
   peer = new RTCPeerConnection(config);
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
