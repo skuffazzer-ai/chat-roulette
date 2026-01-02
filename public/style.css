@@ -30,7 +30,6 @@ body, html {
   object-fit: cover;
 }
 
-/* Кнопки на камерах */
 .controls button, .remote-controls button {
   position: absolute;
   padding: 5px;
@@ -57,7 +56,6 @@ body, html {
 
 .hidden { display: none; }
 
-/* Чат */
 .chat-container {
   height: 40vh;
   background: #222;
@@ -74,9 +72,7 @@ body, html {
   border-radius: 5px;
 }
 
-.chat-message {
-  margin: 2px 0;
-}
+.chat-message { margin: 2px 0; }
 
 .chat-input-fixed {
   position: fixed;
