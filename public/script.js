@@ -15,7 +15,12 @@ startBtn.onclick = async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
 
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  // ⬇️ ЯВНО запрашиваем и видео и звук
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: true
+  });
+
   localVideo.srcObject = localStream;
 
   socket = new WebSocket(
@@ -28,9 +33,8 @@ startBtn.onclick = async () => {
     const data = JSON.parse(event.data);
 
     if (data.type === "match") {
-  createPeer(data.role === "caller");
-}
-
+      createPeer(data.role === "caller");
+    }
 
     if (data.sdp) {
       await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -54,17 +58,25 @@ startBtn.onclick = async () => {
 function createPeer(isCaller) {
   peer = new RTCPeerConnection(config);
 
-  localStream.getTracks().forEach(track =>
-    peer.addTrack(track, localStream)
-  );
+  // ⬇️ ДОБАВЛЯЕМ ВСЕ ТРЕКИ (включая звук!)
+  localStream.getTracks().forEach(track => {
+    peer.addTrack(track, localStream);
+  });
 
-  peer.ontrack = (e) => {
-    remoteVideo.srcObject = e.streams[0];
+  peer.ontrack = (event) => {
+    remoteVideo.srcObject = event.streams[0];
+
+    // 🔊 КЛЮЧЕВОЙ МОМЕНТ
+    remoteVideo.muted = false;
+    remoteVideo.volume = 1.0;
+
+    // иногда нужно явно запустить
+    remoteVideo.play().catch(() => {});
   };
 
-  peer.onicecandidate = (e) => {
-    if (e.candidate) {
-      socket.send(JSON.stringify({ candidate: e.candidate }));
+  peer.onicecandidate = (event) => {
+    if (event.candidate) {
+      socket.send(JSON.stringify({ candidate: event.candidate }));
     }
   };
 
