@@ -1,120 +1,29 @@
-body, html {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  font-family: Arial, sans-serif;
-  background: #1a1a1a;
-  color: white;
-  overflow: hidden;
-}
-
-/* Видеопанель — верхние 60% экрана */
-.videos-container {
-  display: flex;
-  height: 60vh; /* ровно 60% экрана */
-  padding: 2px;
-  box-sizing: border-box;
-}
-
-.local-video-wrapper {
-  position: relative;
-  width: 50%;
-  margin: 2px;
-}
-
-.local-video-wrapper video {
-  width: 100%;
-  height: 100%;
-  background: black;
-  border-radius: 5px;
-  object-fit: cover;
-}
-
-/* Кнопки фиксированные в правом верхнем углу локальной камеры */
-.controls {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  display: flex;
-  flex-direction: column;
-  z-index: 10;
-}
-
-.controls button {
-  padding: 5px 10px;
-  margin: 2px 0;
-  font-size: 14px;
+/* общие стили кнопок */
+button {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  border-radius: 50%;
+  padding: 5px;
+  font-size: 18px;
   cursor: pointer;
-  border: none;
-  border-radius: 3px;
-  background: #555;
-  color: white;
+  opacity: 0.8;
+  transition: opacity 0.2s;
 }
 
-.controls button:hover { background: #777; }
+button:hover { opacity: 1; }
 
-.remote-video-wrapper {
-  width: 50%;
-  margin: 2px;
-}
+/* Локальная камера */
+.local-video-wrapper { position: relative; }
+.controls { position: absolute; top: 5px; right: 5px; display: flex; flex-direction: column; gap: 5px; }
+#startBtn, #stopBtn, #nextBtn { position: absolute; bottom: 5px; right: 5px; flex-direction: row; gap: 5px; }
 
-.remote-video-wrapper video {
-  width: 100%;
-  height: 100%;
-  background: black;
-  border-radius: 5px;
-  object-fit: cover;
-}
+/* Размещение кнопки "следующий" слева от кнопки "завершить" */
+#nextBtn { right: 50px; bottom: 5px; }
 
-/* Чат — нижние 40% экрана */
-.chat-container {
-  height: 40vh; /* ровно 40% экрана */
-  background: #222;
-  padding: 5px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.chat-messages {
-  height: 100%;
-  overflow-y: auto;
-  padding: 5px;
-  border: 1px solid #555;
-  border-radius: 5px;
-}
-
-.chat-message {
-  margin: 2px 0;
-}
-
-/* Поле ввода — фиксированное внизу, видно всегда */
-.chat-input-fixed {
-  position: fixed;
-  bottom: env(safe-area-inset-bottom, 0);
-  left: 0;
-  width: 100%;
-  display: flex;
-  background: #222;
-  padding: 5px;
-  box-sizing: border-box;
-}
-
-.chat-input-fixed input {
-  flex: 1;
-  padding: 8px;
-  border-radius: 5px 0 0 5px;
-  border: none;
-  outline: none;
-}
-
-.chat-input-fixed button {
-  padding: 8px 15px;
-  border: none;
-  background: #555;
-  color: white;
-  border-radius: 0 5px 5px 0;
-  cursor: pointer;
-}
-
-.chat-input-fixed button:hover { background: #777; }
+/* Камера собеседника */
+.remote-video-wrapper { position: relative; }
+.remote-controls { position: absolute; top: 5px; left: 5px; display: flex; flex-direction: column; gap: 5px; }
+#giftBtn { bottom: 5px; left: 5px; position: absolute; }
+#likeBtn { top: 5px; left: 5px; position: absolute; }
+#reportBtn { top: 5px; right: 5px; position: absolute; }
+#muteBtn { top: 50px; right: 5px; position: absolute; }
