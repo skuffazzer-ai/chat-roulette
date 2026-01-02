@@ -12,23 +12,29 @@ const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
 const sendBtn = document.getElementById("sendBtn");
 
-// Новые кнопки
+// Кнопки управления
 const flipBtn = document.getElementById("flipBtn");
 const reportBtn = document.getElementById("reportBtn");
 const giftBtn = document.getElementById("giftBtn");
 const likeBtn = document.getElementById("likeBtn");
 const muteBtn = document.getElementById("muteBtn");
 
+// Новые кнопки для микрофона
+const muteMicBtn = document.getElementById("muteMicBtn");       // твой микрофон
+const muteRemoteBtn = document.getElementById("muteRemoteBtn"); // звук собеседника
+
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// Изначально скрываем кнопки
+// Скрываем кнопки по умолчанию
 flipBtn.style.display = "none";
 reportBtn.style.display = "none";
 giftBtn.style.display = "none";
 likeBtn.style.display = "none";
 muteBtn.style.display = "none";
+muteMicBtn.style.display = "none";
+muteRemoteBtn.style.display = "none";
 
-let usingFrontCamera = true; // флаг для flipBtn
+let usingFrontCamera = true;
 
 // ======== Старт звонка ========
 async function startCall() {
@@ -45,9 +51,10 @@ async function startCall() {
   giftBtn.style.display = "inline-block";
   likeBtn.style.display = "inline-block";
   muteBtn.style.display = "inline-block";
+  muteMicBtn.style.display = "inline-block";
+  muteRemoteBtn.style.display = "inline-block";
 
   try {
-    // Получаем фронтальную камеру
     localStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user" },
       audio: true
@@ -61,12 +68,13 @@ async function startCall() {
     stopBtn.style.display = "none";
     nextBtn.style.display = "none";
 
-    // Скрываем кнопки, если ошибка
     flipBtn.style.display = "none";
     reportBtn.style.display = "none";
     giftBtn.style.display = "none";
     likeBtn.style.display = "none";
     muteBtn.style.display = "none";
+    muteMicBtn.style.display = "none";
+    muteRemoteBtn.style.display = "none";
     return;
   }
 
@@ -110,6 +118,8 @@ function stopCall() {
   giftBtn.style.display = "none";
   likeBtn.style.display = "none";
   muteBtn.style.display = "none";
+  muteMicBtn.style.display = "none";
+  muteRemoteBtn.style.display = "none";
 
   if(peer) { peer.close(); peer = null; }
   if(socket) { socket.close(); socket = null; }
@@ -192,10 +202,23 @@ flipBtn.onclick = async () => {
 reportBtn.onclick = () => console.log("Жалоба нажата");
 giftBtn.onclick = () => console.log("Подарок нажата");
 likeBtn.onclick = () => console.log("Лайк нажата");
-muteBtn.onclick = () => {
+
+// Мут своего микрофона
+muteMicBtn.onclick = () => {
   if(!localStream) return;
   const track = localStream.getAudioTracks()[0];
   if(track) track.enabled = !track.enabled;
+  muteMicBtn.textContent = track.enabled ? "Микрофон ON" : "Микрофон OFF";
+};
+
+// Мут собеседника
+muteRemoteBtn.onclick = () => {
+  if(!remoteVideo.srcObject) return;
+  const remoteStream = remoteVideo.srcObject;
+  remoteStream.getAudioTracks().forEach(track => {
+    track.enabled = !track.enabled;
+  });
+  muteRemoteBtn.textContent = remoteStream.getAudioTracks()[0].enabled ? "Собеседник ON" : "Собеседник OFF";
 };
 
 // ======== Pull-to-refresh ========
