@@ -1,39 +1,79 @@
-body {
+/* Основные стили */
+body, html {
   margin: 0;
   padding: 0;
   font-family: Arial, sans-serif;
   background: #1a1a1a;
   color: white;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* убираем прокрутку страницы */
   display: flex;
   flex-direction: column;
-  height: 100vh;
 }
 
 .videos-container {
   display: flex;
+  flex: 0.6; /* верхняя часть экрана */
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.local-video-wrapper {
+  position: relative;
   flex: 1;
-  border-bottom: 2px solid #333;
+  margin: 2px;
 }
 
 video {
-  flex: 1;
+  width: 100%;
+  height: 100%;
   background: black;
   border-radius: 5px;
-  margin: 5px;
-  object-fit: cover;
+  object-fit: cover; /* масштабируем под размер окна */
 }
 
-.chat-container {
-  flex: 0.4;
+.controls {
+  position: absolute;
+  top: 5px;
+  right: 5px;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+}
+
+.controls button {
+  padding: 5px 10px;
+  margin: 2px 0;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 3px;
+  background: #555;
+  color: white;
+}
+
+.controls button:hover {
+  background: #777;
+}
+
+#remoteVideo {
+  flex: 1;
+  margin: 2px;
+}
+
+/* Чат */
+.chat-container {
+  flex: 0.4; /* нижняя часть экрана */
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
   background: #222;
+  box-sizing: border-box;
 }
 
 .chat-messages {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: auto; /* появление скролла внутри чата */
   margin-bottom: 5px;
   padding: 5px;
   border: 1px solid #555;
@@ -41,7 +81,7 @@ video {
 }
 
 .chat-message {
-  margin: 3px 0;
+  margin: 2px 0;
 }
 
 .chat-input {
@@ -67,17 +107,4 @@ video {
 
 .chat-input button:hover {
   background: #777;
-}
-
-.controls {
-  display: flex;
-  justify-content: center;
-  margin: 5px;
-}
-
-.controls button {
-  padding: 10px 20px;
-  font-size: 16px;
-  margin: 0 5px;
-  cursor: pointer;
 }
