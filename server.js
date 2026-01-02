@@ -5,13 +5,12 @@ const io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-const ROOM_ID = "room1"; // фиксированная комната для двух пользователей
+const ROOM_ID = 'room1';
 
 io.on('connection', (socket) => {
   console.log('Пользователь подключился:', socket.id);
   socket.join(ROOM_ID);
 
-  // Сообщаем другим, что пользователь пришёл
   socket.to(ROOM_ID).emit('user-joined', socket.id);
 
   socket.on('offer', (offer) => {
@@ -33,4 +32,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`Сервер запущен на http://localhost:${PORT}`));
+http.listen(PORT, () => console.log(`Server running on port ${PORT}`));
