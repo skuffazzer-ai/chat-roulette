@@ -5,34 +5,36 @@ const io = require('socket.io')(http);
 
 app.use(express.static('public'));
 
-let users = [];
+let room = [];
 
 io.on('connection', socket => {
-  console.log('Подключился:', socket.id);
+  console.log('Connected:', socket.id);
 
-  users.push(socket.id);
+  if (room.length < 2) {
+    room.push(socket.id);
+  }
 
-  if (users.length === 2) {
-    io.to(users[0]).emit('role', 'caller');
-    io.to(users[1]).emit('role', 'callee');
+  if (room.length === 2) {
+    io.to(room[0]).emit('role', 'caller');
+    io.to(room[1]).emit('role', 'callee');
   }
 
   socket.on('offer', offer => {
-    socket.to(users.find(id => id !== socket.id)).emit('offer', offer);
+    socket.to(room.find(id => id !== socket.id)).emit('offer', offer);
   });
 
   socket.on('answer', answer => {
-    socket.to(users.find(id => id !== socket.id)).emit('answer', answer);
+    socket.to(room.find(id => id !== socket.id)).emit('answer', answer);
   });
 
   socket.on('ice-candidate', candidate => {
-    socket.to(users.find(id => id !== socket.id)).emit('ice-candidate', candidate);
+    socket.to(room.find(id => id !== socket.id)).emit('ice-candidate', candidate);
   });
 
   socket.on('disconnect', () => {
-    users = users.filter(id => id !== socket.id);
+    room = room.filter(id => id !== socket.id);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log('Server running on', PORT));
+http.listen(PORT, () => console.log('Railway server running on', PORT));
