@@ -11,7 +11,7 @@ io.on('connection', (socket) => {
   console.log('Пользователь подключился:', socket.id);
   socket.join(ROOM_ID);
 
-  // Сообщаем другим пользователям, что пришёл новый
+  // Сообщаем другим, что появился новый пользователь
   socket.to(ROOM_ID).emit('user-joined', socket.id);
 
   socket.on('offer', (offer) => {
@@ -33,4 +33,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`Сервер запущен на http://localhost:${PORT}`));
+http.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
