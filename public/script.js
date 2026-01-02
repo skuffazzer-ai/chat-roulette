@@ -5,10 +5,11 @@ const startButton = document.getElementById('startButton');
 
 let localStream;
 let peerConnection;
+let isCaller = false;
 
 const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-// Получаем локальный поток (видео + аудио)
+// Получаем локальный поток
 async function initLocalStream() {
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   localVideo.srcObject = localStream;
@@ -18,37 +19,41 @@ async function initLocalStream() {
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(configuration);
 
-  // Когда приходит поток от собеседника
   peerConnection.ontrack = (event) => {
     remoteVideo.srcObject = event.streams[0];
   };
 
-  // ICE-кандидаты
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit('ice-candidate', event.candidate);
     }
   };
 
-  // Добавляем локальные треки
   localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 }
 
 // Начало звонка
-async function startCall(isCaller) {
+async function startCall() {
   await initLocalStream();
   createPeerConnection();
+  isCaller = true;
 
-  if (isCaller) {
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    socket.emit('offer', offer);
-  }
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  socket.emit('offer', offer);
 }
 
 // Сигнальный сервер
+socket.on('user-joined', () => {
+  // Если пришёл кто-то ещё и мы ещё не создали соединение
+  if (!peerConnection && !isCaller) {
+    startCall(); // автоматически создаём offer, если второй подключается
+  }
+});
+
 socket.on('offer', async (offer) => {
-  await createPeerConnection();
+  if (!peerConnection) await initLocalStream(), createPeerConnection();
+
   await peerConnection.setRemoteDescription(offer);
   const answer = await peerConnection.createAnswer();
   await peerConnection.setLocalDescription(answer);
@@ -61,11 +66,11 @@ socket.on('answer', async (answer) => {
 
 socket.on('ice-candidate', async (candidate) => {
   try {
-    await peerConnection.addIceCandidate(candidate);
+    if (peerConnection) await peerConnection.addIceCandidate(candidate);
   } catch (err) {
     console.error('Ошибка добавления ICE-кандидата', err);
   }
 });
 
-// Кнопка "Начать" (инициатор звонка)
-startButton.addEventListener('click', () => startCall(true));
+// Кнопка "Начать"
+startButton.addEventListener('click', startCall);
