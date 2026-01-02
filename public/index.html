@@ -11,13 +11,27 @@
 <div class="videos-container">
   <div class="local-video-wrapper">
     <video id="localVideo" autoplay muted playsinline></video>
+    
+    <!-- Кнопки твоей камеры -->
     <div class="controls">
-      <button id="startBtn">Начать</button>
-      <button id="stopBtn" disabled>Завершить</button>
+      <button id="flipBtn">🔄</button>
+      <button id="micBtn">🎤</button>
+      <button id="startBtn">▶️</button>
+      <button id="stopBtn" disabled>⏹️</button>
+      <button id="nextBtn">⏭️</button>
     </div>
   </div>
+
   <div class="remote-video-wrapper">
     <video id="remoteVideo" autoplay playsinline></video>
+
+    <!-- Кнопки собеседника -->
+    <div class="remote-controls">
+      <button id="likeBtn">❤️</button>
+      <button id="reportBtn">⚠️</button>
+      <button id="muteBtn">🔇</button>
+      <button id="giftBtn">🎁</button>
+    </div>
   </div>
 </div>
 
