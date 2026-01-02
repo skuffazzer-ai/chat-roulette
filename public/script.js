@@ -31,7 +31,7 @@ async function startCall() {
   nextBtn.style.display = "inline-block";
 
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
     localVideo.srcObject = localStream;
   } catch (e) {
     console.error("Не удалось получить камеру/микрофон:", e);
@@ -127,15 +127,39 @@ sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
 // ======== Новые кнопки ========
+let currentFacing = "user"; // фронтальная камера по умолчанию
+
 flipBtn.onclick = async () => {
   if (!localStream) return;
-  const videoTrack = localStream.getVideoTracks()[0];
-  if(videoTrack) {
-    const constraints = videoTrack.getConstraints();
-    const facingMode = constraints.facingMode === "user" ? "environment" : "user";
-    videoTrack.applyConstraints({ facingMode });
+
+  currentFacing = currentFacing === "user" ? "environment" : "user";
+
+  try {
+    const audioTracks = localStream.getAudioTracks();
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: currentFacing },
+      audio: audioTracks.length ? true : false
+    });
+
+    const newVideoTrack = newStream.getVideoTracks()[0];
+    const oldVideoTrack = localStream.getVideoTracks()[0];
+    if(oldVideoTrack) oldVideoTrack.stop();
+    localStream.removeTrack(oldVideoTrack);
+    localStream.addTrack(newVideoTrack);
+    localVideo.srcObject = null;
+    localVideo.srcObject = localStream;
+
+    if(peer) {
+      const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
+      if(sender) sender.replaceTrack(newVideoTrack);
+    }
+
+    console.log("Камера перевернута:", currentFacing);
+  } catch(e) {
+    console.error("Ошибка при перевороте камеры:", e);
   }
 };
+
 reportBtn.onclick = () => console.log("Жалоба нажата");
 giftBtn.onclick = () => console.log("Подарок нажата");
 likeBtn.onclick = () => console.log("Лайк нажата");
