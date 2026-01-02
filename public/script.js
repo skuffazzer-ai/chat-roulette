@@ -19,11 +19,12 @@ const giftBtn = document.getElementById("giftBtn");
 
 const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
+const chatOverlay = document.getElementById("chatMessagesOverlay");
 const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Видео и WebSocket ========
+// ======== Видео ========
 async function getCameraStream() {
   if(localStream) localStream.getTracks().forEach(t => t.stop());
 
@@ -39,11 +40,9 @@ async function getCameraStream() {
   }
 }
 
-// Показываем кнопки после Start
+// Показываем/скрываем кнопки после Start
 function showCallButtons(show){
-  [flipBtn, micBtn, stopBtn, nextBtn, likeBtn, reportBtn, muteBtn, giftBtn].forEach(b => {
-    b.style.display = show ? "block" : "none";
-  });
+  [flipBtn, micBtn, stopBtn, nextBtn, likeBtn, reportBtn, muteBtn, giftBtn].forEach(b => b.style.display = show ? "block" : "none");
   startBtn.style.display = show ? "none" : "block";
 }
 
@@ -78,7 +77,7 @@ startBtn.onclick = async () => {
 };
 
 stopBtn.onclick = stopCall;
-nextBtn.onclick = () => {}; // просто нажимается
+nextBtn.onclick = () => {};
 
 flipBtn.onclick = () => { usingFrontCamera = !usingFrontCamera; getCameraStream(); };
 
@@ -91,7 +90,7 @@ muteBtn.onclick = () => {
   }
 };
 
-[likeBtn, reportBtn, giftBtn].forEach(b => b.onclick = () => {}); // просто нажимается
+[likeBtn, reportBtn, giftBtn].forEach(b => b.onclick = () => {});
 
 // ======== Peer ========
 function createPeer(isCaller){
@@ -110,20 +109,39 @@ function createPeer(isCaller){
 
 // ======== Чат ========
 function appendMessage(sender, text){
-  const div = document.createElement("div");
-  div.className = "chat-message";
-  div.textContent = `${sender}: ${text}`;
-  chatMessages.appendChild(div);
+  const div1 = document.createElement("div");
+  div1.className = "chat-message";
+  div1.textContent = `${sender}: ${text}`;
+  chatMessages.appendChild(div1);
+
+  const div2 = div1.cloneNode(true);
+  chatOverlay.appendChild(div2);
+
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatOverlay.scrollTop = chatOverlay.scrollHeight;
 }
 
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
+
+  if(socket) socket.send(JSON.stringify({ type: "chat", message: msg }));
+
   appendMessage("Вы", msg);
-  socket.send(JSON.stringify({ type: "chat", message: msg }));
   chatInput.value = "";
+  chatInput.focus(); // клавиатура остаётся открытой
 }
+
+// Открытие прозрачного чата при фокусе
+chatInput.addEventListener("focus", () => {
+  chatOverlay.style.display = "block";
+  chatOverlay.scrollTop = chatOverlay.scrollHeight;
+});
+
+// Закрытие прозрачного чата при blur
+chatInput.addEventListener("blur", () => {
+  chatOverlay.style.display = "none";
+});
 
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
@@ -139,17 +157,5 @@ function stopCall(){
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
+  chatOverlay.innerHTML = "";
 }
-
-// ======== Pull-to-refresh ========
-let touchStartY = 0;
-document.addEventListener('touchstart', e => { if(e.touches.length === 1) touchStartY = e.touches[0].clientY; });
-document.addEventListener('touchmove', e => {
-  if(e.touches.length === 1){
-    const touchEndY = e.touches[0].clientY;
-    if(touchEndY - touchStartY > 100) location.reload();
-  }
-});
-
-// ======== Автоскролл чата ========
-chatInput.addEventListener("focus", () => { setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 300); });
