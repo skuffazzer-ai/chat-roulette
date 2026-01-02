@@ -1,47 +1,29 @@
-const express = require("express");
-const WebSocket = require("ws");
-const path = require("path");
-
+const express = require('express');
 const app = express();
-app.use(express.static("public"));
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
 
-const server = app.listen(process.env.PORT || 3000, () => {
-  console.log("Server started");
-});
+app.use(express.static('public')); // отдаём папку public
 
-const wss = new WebSocket.Server({ server });
+io.on('connection', (socket) => {
+  console.log('Пользователь подключился');
 
-let waitingUser = null;
-
-wss.on("connection", (ws) => {
-  ws.partner = null;
-
-  if (waitingUser) {
-    ws.partner = waitingUser;
-    waitingUser.partner = ws;
-
-    ws.send(JSON.stringify({ type: "match", role: "caller" }));
-waitingUser.send(JSON.stringify({ type: "match", role: "callee" }));
-
-  
-    waitingUser = null;
-  } else {
-    waitingUser = ws;
-  }
-
-  ws.on("message", (msg) => {
-    if (ws.partner) {
-      ws.partner.send(msg.toString());
-    }
+  socket.on('offer', (offer) => {
+    socket.broadcast.emit('offer', offer);
   });
 
-  ws.on("close", () => {
-    if (ws === waitingUser) {
-      waitingUser = null;
-    }
-    if (ws.partner) {
-      ws.partner.send(JSON.stringify({ type: "leave" }));
-      ws.partner.partner = null;
-    }
+  socket.on('answer', (answer) => {
+    socket.broadcast.emit('answer', answer);
+  });
+
+  socket.on('ice-candidate', (candidate) => {
+    socket.broadcast.emit('ice-candidate', candidate);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Пользователь отключился');
   });
 });
+
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => console.log(`Сервер запущен на http://localhost:${PORT}`));
