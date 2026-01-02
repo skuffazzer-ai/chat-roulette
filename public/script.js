@@ -24,6 +24,9 @@ const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 // Изначально скрываем flipBtn
 flipBtn.style.display = "none";
 
+let videoDevices = [];
+let currentVideoIndex = 0;
+
 // ======== Старт звонка ========
 async function startCall() {
   startBtn.disabled = true;
@@ -35,7 +38,23 @@ async function startCall() {
   flipBtn.style.display = "inline-block";
 
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+    // Получаем все видеоустройства
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    videoDevices = devices.filter(d => d.kind === "videoinput");
+
+    if (videoDevices.length === 0) throw new Error("Нет видеоустройств");
+
+    // Выбираем фронтальную камеру, если есть
+    currentVideoIndex = videoDevices.findIndex(d => d.label.toLowerCase().includes("front"));
+    if (currentVideoIndex === -1) currentVideoIndex = 0;
+
+    const deviceId = videoDevices[currentVideoIndex].deviceId;
+
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: deviceId } },
+      audio: true
+    });
+
     localVideo.srcObject = localStream;
   } catch (e) {
     console.error("Не удалось получить камеру/микрофон:", e);
@@ -132,58 +151,47 @@ function sendMessage(){
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-// ======== Новые кнопки ========
-
-// Реально работающий flipBtn для Android и iOS
+// ======== flipBtn ========
 flipBtn.onclick = async () => {
-  if (!localStream) return;
+  if (!localStream || videoDevices.length < 2) return;
 
-  const audioTracks = localStream.getAudioTracks();
-  const currentVideoTrack = localStream.getVideoTracks()[0];
-
-  // Получаем список всех камер
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  const videoDevices = devices.filter(d => d.kind === "videoinput");
-
-  if (videoDevices.length < 2) return console.warn("Нет второй камеры");
-
-  const currentId = currentVideoTrack.getSettings()?.deviceId;
-  const nextDevice = videoDevices.find(d => d.deviceId !== currentId);
-
-  if (!nextDevice) return console.warn("Не удалось найти другую камеру");
+  // Выбираем следующую камеру в списке
+  currentVideoIndex = (currentVideoIndex + 1) % videoDevices.length;
+  const deviceId = videoDevices[currentVideoIndex].deviceId;
 
   try {
     const newStream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: nextDevice.deviceId } },
-      audio: audioTracks.length ? true : false
+      video: { deviceId: { exact: deviceId } },
+      audio: localStream.getAudioTracks().length > 0
     });
 
     const newVideoTrack = newStream.getVideoTracks()[0];
+    const oldVideoTrack = localStream.getVideoTracks()[0];
 
-    currentVideoTrack.stop();
-    localStream.removeTrack(currentVideoTrack);
+    oldVideoTrack.stop();
+    localStream.removeTrack(oldVideoTrack);
     localStream.addTrack(newVideoTrack);
 
     localVideo.srcObject = null;
     localVideo.srcObject = localStream;
 
-    if (peer) {
+    if(peer){
       const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
-      if (sender) await sender.replaceTrack(newVideoTrack);
+      if(sender) await sender.replaceTrack(newVideoTrack);
     }
 
-    console.log("Камера успешно переключена:", nextDevice.label || nextDevice.deviceId);
-  } catch (err) {
-    console.error("Ошибка при переключении камеры:", err);
+    console.log("Камера переключена:", videoDevices[currentVideoIndex].label || deviceId);
+  } catch(err) {
+    console.error("Ошибка переключения камеры:", err);
   }
 };
 
-// Остальные кнопки (дефолтная логика)
+// ======== Остальные кнопки ========
 reportBtn.onclick = () => console.log("Жалоба нажата");
 giftBtn.onclick = () => console.log("Подарок нажата");
 likeBtn.onclick = () => console.log("Лайк нажата");
 muteBtn.onclick = () => {
-  if (!localStream) return;
+  if(!localStream) return;
   const track = localStream.getAudioTracks()[0];
   if(track) track.enabled = !track.enabled;
 };
