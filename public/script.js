@@ -11,12 +11,25 @@ const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
 const sendBtn = document.getElementById("sendBtn");
 
+// Новые кнопки
+const flipBtn = document.getElementById("flipBtn");
+const nextBtn = document.getElementById("nextBtn");
+const reportBtn = document.getElementById("reportBtn");
+const giftBtn = document.getElementById("giftBtn");
+const likeBtn = document.getElementById("likeBtn");
+const muteBtn = document.getElementById("muteBtn");
+
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 // ======== Видео и WebSocket ========
 startBtn.onclick = async () => {
   startBtn.disabled = true;
   stopBtn.disabled = false;
+
+  // Start / Stop / Next логика
+  startBtn.style.display = "none";
+  stopBtn.style.display = "inline-block";
+  nextBtn.style.display = "inline-block";
 
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   localVideo.srcObject = localStream;
@@ -83,11 +96,15 @@ function sendMessage(){
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-// ======== Стоп ========
-stopBtn.onclick = stop;
-function stop(){
+// ======== Stop кнопка ========
+stopBtn.onclick = () => {
   startBtn.disabled = false;
   stopBtn.disabled = true;
+
+  // Start / Stop / Next логика
+  stopBtn.style.display = "none";
+  nextBtn.style.display = "none";
+  startBtn.style.display = "inline-block";
 
   if(peer) peer.close();
   if(socket) socket.close();
@@ -96,7 +113,30 @@ function stop(){
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
-}
+};
+
+// ======== Новые кнопки – дефолтная логика ========
+flipBtn.onclick = async () => {
+  if (!localStream) return;
+  const videoTrack = localStream.getVideoTracks()[0];
+  if(videoTrack) {
+    const constraints = videoTrack.getConstraints();
+    const facingMode = constraints.facingMode === "user" ? "environment" : "user";
+    videoTrack.applyConstraints({ facingMode });
+    console.log("Камера перевернута");
+  }
+};
+
+nextBtn.onclick = () => console.log("Следующий нажато");
+reportBtn.onclick = () => console.log("Жалоба нажата");
+giftBtn.onclick = () => console.log("Подарок нажата");
+likeBtn.onclick = () => console.log("Лайк нажата");
+muteBtn.onclick = () => {
+  if (!localStream) return;
+  const track = localStream.getAudioTracks()[0];
+  if(track) track.enabled = !track.enabled;
+  console.log("Мут переключён");
+};
 
 // ======== Pull-to-refresh ========
 let touchStartY = 0;
