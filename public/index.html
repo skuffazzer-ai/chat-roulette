@@ -9,18 +9,32 @@
 <body>
 
 <div class="videos-container">
+
+  <!-- Локальное видео -->
   <div class="local-video-wrapper">
     <video id="localVideo" autoplay muted playsinline></video>
     <div class="controls">
-      <button id="startBtn">Начать</button>
-      <button id="stopBtn" disabled>Завершить</button>
+      <button id="flipBtn">🔄</button>       <!-- переворот камеры -->
+      <button id="startBtn">▶️</button>     <!-- начать -->
+      <button id="stopBtn" disabled>⏹️</button> <!-- завершить -->
+      <button id="nextBtn" style="display:none;">⏭️</button> <!-- следующий -->
     </div>
   </div>
+
+  <!-- Видео собеседника -->
   <div class="remote-video-wrapper">
     <video id="remoteVideo" autoplay playsinline></video>
+    <div class="remote-controls">
+      <button id="likeBtn">❤️</button>    <!-- лайк -->
+      <button id="reportBtn">⚠️</button>  <!-- жалоба -->
+      <button id="muteBtn">🔇</button>    <!-- мут -->
+      <button id="giftBtn">🎁</button>    <!-- подарок -->
+    </div>
   </div>
+
 </div>
 
+<!-- Чат -->
 <div class="chat-container">
   <div id="chatMessages" class="chat-messages"></div>
 </div>
