@@ -139,16 +139,17 @@ sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
 // ======== Новые кнопки ========
-
 flipBtn.onclick = async () => {
   if (!localStream) return;
 
   currentFacing = currentFacing === "user" ? "environment" : "user";
 
+  const audioTracks = localStream.getAudioTracks();
+  
   try {
-    const audioTracks = localStream.getAudioTracks();
-    const newStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { exact: currentFacing } },
+    // Пробуем переключить через facingMode
+    let newStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: currentFacing },
       audio: audioTracks.length ? true : false
     });
 
@@ -162,15 +163,45 @@ flipBtn.onclick = async () => {
     localVideo.srcObject = null;
     localVideo.srcObject = localStream;
 
-    // Если уже есть Peer, заменяем трек на стороне собеседника
     if (peer) {
       const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
       if (sender) sender.replaceTrack(newVideoTrack);
     }
 
-    console.log("Камера переключена на:", currentFacing === "user" ? "фронтальную" : "заднюю");
-  } catch (e) {
-    console.error("Ошибка при переключении камеры:", e);
+    console.log("Камера переключена на:", currentFacing);
+  } catch (err) {
+    console.warn("facingMode не сработал, используем fallback deviceId", err);
+
+    // fallback: берём другую доступную камеру
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(d => d.kind === "videoinput");
+    const currentId = localStream.getVideoTracks()[0]?.getSettings()?.deviceId;
+    const nextDevice = videoDevices.find(d => d.deviceId !== currentId);
+
+    if (nextDevice) {
+      const fallbackStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: nextDevice.deviceId } },
+        audio: audioTracks.length ? true : false
+      });
+
+      const fallbackVideoTrack = fallbackStream.getVideoTracks()[0];
+      const oldVideoTrack = localStream.getVideoTracks()[0];
+      if (oldVideoTrack) oldVideoTrack.stop();
+      localStream.removeTrack(oldVideoTrack);
+      localStream.addTrack(fallbackVideoTrack);
+
+      localVideo.srcObject = null;
+      localVideo.srcObject = localStream;
+
+      if (peer) {
+        const sender = peer.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) sender.replaceTrack(fallbackVideoTrack);
+      }
+
+      console.log("Камера переключена через fallback deviceId:", nextDevice.label);
+    } else {
+      console.error("Не удалось найти другую камеру");
+    }
   }
 };
 
