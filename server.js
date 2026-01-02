@@ -6,7 +6,7 @@ const app = express();
 app.use(express.static("public"));
 
 const server = app.listen(process.env.PORT || 3000, () => {
-  console.log("Server started");
+  console.log("Server started on port", process.env.PORT || 3000);
 });
 
 const wss = new WebSocket.Server({ server });
@@ -20,9 +20,9 @@ wss.on("connection", (ws) => {
     ws.partner = waitingUser;
     waitingUser.partner = ws;
 
+    // Отправляем роли
     ws.send(JSON.stringify({ type: "match", role: "caller" }));
-waitingUser.send(JSON.stringify({ type: "match", role: "callee" }));
-
+    waitingUser.send(JSON.stringify({ type: "match", role: "callee" }));
 
     waitingUser = null;
   } else {
@@ -31,14 +31,16 @@ waitingUser.send(JSON.stringify({ type: "match", role: "callee" }));
 
   ws.on("message", (msg) => {
     if (ws.partner) {
-      ws.partner.send(msg.toString());
+      try {
+        ws.partner.send(msg.toString());
+      } catch (e) {
+        console.log("Ошибка отправки сообщения партнеру:", e);
+      }
     }
   });
 
   ws.on("close", () => {
-    if (ws === waitingUser) {
-      waitingUser = null;
-    }
+    if (ws === waitingUser) waitingUser = null;
     if (ws.partner) {
       ws.partner.send(JSON.stringify({ type: "leave" }));
       ws.partner.partner = null;
