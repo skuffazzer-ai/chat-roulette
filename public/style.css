@@ -6,7 +6,7 @@ body, html {
   font-family: Arial, sans-serif;
   background: #1a1a1a;
   color: white;
-  overflow: hidden; /* убираем прокрутку всей страницы */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -14,14 +14,14 @@ body, html {
 /* Верхняя половина — видео */
 .videos-container {
   display: flex;
-  flex: 0.6; /* 60% экрана */
+  flex: 0.6;
   padding: 2px;
   box-sizing: border-box;
 }
 
 .local-video-wrapper {
   position: relative;
-  width: 50%; /* половина экрана */
+  width: 50%;
   margin: 2px;
 }
 
@@ -72,7 +72,7 @@ body, html {
 
 /* Нижняя половина — чат */
 .chat-container {
-  flex: 0.4; /* 40% экрана */
+  flex: 0.4;
   display: flex;
   flex-direction: column;
   padding: 5px;
@@ -80,7 +80,6 @@ body, html {
   background: #222;
 }
 
-/* Сообщения чата */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -94,10 +93,11 @@ body, html {
   margin: 2px 0;
 }
 
-/* Поле ввода расположено в отдельном блоке, выше сенсорных кнопок */
+/* Поле ввода всегда над сенсорными кнопками */
 .chat-input-wrapper {
   flex: 0 0 auto;
-  padding-bottom: env(safe-area-inset-bottom, 10px); /* над сенсорными кнопками iOS/Android */
+  padding-bottom: env(safe-area-inset-bottom, 12px);
+  background: #222;
 }
 
 .chat-input {
