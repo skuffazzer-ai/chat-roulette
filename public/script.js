@@ -45,8 +45,18 @@ async function getCameraStream() {
   localVideo.srcObject = localStream;
 
   if(peer){
-    const sender = peer.getSenders().find(s => s.track.kind==='video');
-    if(sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
+    // ===== Обновляем видео и аудио треки =====
+    const videoSender = peer.getSenders().find(s => s.track.kind==='video');
+    if(videoSender) videoSender.replaceTrack(localStream.getVideoTracks()[0]);
+
+    const audioSender = peer.getSenders().find(s => s.track.kind==='audio');
+    if(audioSender) audioSender.replaceTrack(localStream.getAudioTracks()[0]);
+  }
+
+  // Синхронизация кнопки микрофона
+  if(localStream){
+    const audioTrack = localStream.getAudioTracks()[0];
+    micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
   }
 }
 
