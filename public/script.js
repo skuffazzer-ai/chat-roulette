@@ -54,10 +54,10 @@ startBtn.onclick = async () => {
   connectToServer();
 };
 
-// ====== Соединение с WebSocket и Peer ======
+// ====== Подключение к серверу ======
 function connectToServer() {
   if (socket) socket.close();
-  if (peer) { peer.close(); peer = null; }
+  if (peer) closePeer();
 
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
   socket.onmessage = async (event) => {
@@ -82,7 +82,6 @@ function connectToServer() {
     if (data.type === "leave") stopRemote();
   };
 
-  // очищаем предыдущий удалённый видео поток
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
 }
@@ -113,7 +112,7 @@ function createPeer(isCaller) {
   }
 }
 
-// ====== FLIP CAMERA ======
+// ====== Flip камера ======
 flipBtn.onclick = async () => {
   usingFrontCamera = !usingFrontCamera;
   if (localStream) {
@@ -133,7 +132,7 @@ flipBtn.onclick = async () => {
   }
 };
 
-// ====== MIC TOGGLE ======
+// ====== MIC Toggle ======
 micBtn.onclick = () => {
   if (!localStream) return;
   const audioTrack = localStream.getAudioTracks()[0];
@@ -141,7 +140,7 @@ micBtn.onclick = () => {
   micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
 };
 
-// ====== REMOTE MUTE ======
+// ====== Remote Mute ======
 muteRemoteBtn.onclick = () => {
   if (!remoteVideo.srcObject) return;
   const audioTrack = remoteVideo.srcObject.getAudioTracks()[0];
@@ -174,7 +173,7 @@ function stop() {
   startBtn.classList.remove("hidden");
   [stopBtn, nextBtn, flipBtn, micBtn, reportBtn, likeBtn, muteRemoteBtn, giftBtn].forEach(b => b.classList.add("hidden"));
 
-  if (peer) { peer.close(); peer = null; }
+  if (peer) closePeer();
   if (socket) { socket.close(); socket = null; }
 
   if (localStream) localStream.getTracks().forEach(t => t.stop());
@@ -187,35 +186,35 @@ function stop() {
 
 // ====== Следующий собеседник ======
 nextBtn.onclick = () => {
-  // Отправляем серверу leave, чтобы предыдущий партнер освободился
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "leave" }));
-  }
-
-  // Закрываем текущий PeerConnection и WebSocket
-  if (peer) { peer.close(); peer = null; }
+  if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "leave" }));
+  closePeer();
   if (socket) { socket.close(); socket = null; }
-
-  // Очищаем удалённое видео и чат
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
-
-  // Подключаемся к серверу заново
   connectToServer();
 };
 
+// ====== Закрытие Peer ======
+function closePeer() {
+  if (peer) {
+    peer.getSenders().forEach(sender => { if (sender.track) sender.track.stop(); });
+    peer.close();
+    peer = null;
+  }
+  if (remoteVideo.srcObject) {
+    remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+    remoteVideo.srcObject = null;
+  }
+}
 
 // ====== Другие кнопки ======
 reportBtn.onclick = () => alert("Жалоба отправлена");
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
 
-// ====== Pull-to-refresh для iPhone и Android ======
+// ====== Pull-to-refresh ======
 let touchStartY = 0;
 let touchEndY = 0;
-
 document.addEventListener('touchstart', e => { if(e.touches.length===1) touchStartY = e.touches[0].clientY; });
 document.addEventListener('touchmove', e => { if(e.touches.length===1) touchEndY = e.touches[0].clientY; });
-document.addEventListener('touchend', e => {
-  if (touchEndY - touchStartY > 150) location.reload();
-});
+document.addEventListener('touchend', e => { if (touchEndY - touchStartY > 150) location.reload(); });
