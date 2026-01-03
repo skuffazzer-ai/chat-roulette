@@ -9,45 +9,19 @@ body, html {
   overflow: hidden;
 }
 
-/* Age Gate */
-.age-gate {
-  position: fixed;
-  inset: 0;
-  background: #111;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  text-align: center;
-  z-index: 1000;
-}
-.age-gate button {
-  padding: 10px 20px;
-  margin-top: 20px;
-  background: #555;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  color: white;
-}
-.age-gate button:hover { background: #777; }
-
-.hidden { display: none; }
-
-/* Видео */
 .videos-container {
   display: flex;
   height: 60vh;
   padding: 2px;
   box-sizing: border-box;
 }
+
 .local-video-wrapper, .remote-video-wrapper {
   position: relative;
   width: 50%;
   margin: 2px;
 }
+
 .local-video-wrapper video, .remote-video-wrapper video {
   width: 100%;
   height: 100%;
@@ -56,7 +30,6 @@ body, html {
   object-fit: cover;
 }
 
-/* Кнопки */
 .controls button, .remote-controls button {
   position: absolute;
   padding: 5px;
@@ -68,6 +41,7 @@ body, html {
   color: white;
   cursor: pointer;
 }
+
 .controls button:hover, .remote-controls button:hover { background: #777; }
 
 #flipBtn { top: 5px; right: 5px; }
@@ -75,12 +49,12 @@ body, html {
 #startBtn, #stopBtn, #nextBtn { bottom: 5px; right: 5px; }
 #nextBtn { right: 60px; }
 
-.remote-controls #reportBtn { top: 5px; right: 5px; }
 .remote-controls #muteRemoteBtn { top: 50px; right: 5px; }
 .remote-controls #likeBtn { top: 5px; left: 5px; }
 .remote-controls #giftBtn { bottom: 5px; left: 5px; }
 
-/* Chat */
+.hidden { display: none; }
+
 .chat-container {
   height: 40vh;
   background: #222;
@@ -88,6 +62,7 @@ body, html {
   box-sizing: border-box;
   overflow: hidden;
 }
+
 .chat-messages {
   height: 100%;
   overflow-y: auto;
@@ -95,6 +70,7 @@ body, html {
   border: 1px solid #555;
   border-radius: 5px;
 }
+
 .chat-message { margin: 2px 0; }
 
 .chat-input-fixed {
@@ -107,6 +83,7 @@ body, html {
   padding: 5px;
   box-sizing: border-box;
 }
+
 .chat-input-fixed input {
   flex: 1;
   padding: 8px;
@@ -114,6 +91,7 @@ body, html {
   border: none;
   outline: none;
 }
+
 .chat-input-fixed button {
   padding: 8px 15px;
   border: none;
@@ -122,34 +100,5 @@ body, html {
   border-radius: 0 5px 5px 0;
   cursor: pointer;
 }
-.chat-input-fixed button:hover { background: #777; }
 
-/* Modal */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-}
-.modal-content {
-  background: #111;
-  padding: 20px;
-  border-radius: 10px;
-  width: 250px;
-  text-align: center;
-}
-.modal-content button {
-  display: block;
-  width: 100%;
-  margin: 6px 0;
-  padding: 8px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background: #555;
-  color: white;
-}
-.modal-content button:hover { background: #777; }
+.chat-input-fixed button:hover { background: #777; }
