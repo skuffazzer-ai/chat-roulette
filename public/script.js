@@ -23,7 +23,7 @@ const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Получаем камеру ========
+// ===== Получаем камеру =====
 async function getCameraStream() {
   if(localStream) localStream.getTracks().forEach(t => t.stop());
 
@@ -50,7 +50,7 @@ async function getCameraStream() {
   }
 }
 
-// ======== Чат ========
+// ===== Чат =====
 function appendMessage(sender, text){
   const div = document.createElement("div");
   div.className = "chat-message";
@@ -59,7 +59,7 @@ function appendMessage(sender, text){
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// ======== START/STOP/NEXT ========
+// ===== START/STOP/NEXT =====
 startBtn.onclick = async () => {
   startBtn.classList.add("hidden");
   stopBtn.classList.remove("hidden");
@@ -77,8 +77,13 @@ startBtn.onclick = async () => {
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
 
+    // ===== Системные уведомления =====
+    if(data.type === "alert") appendMessage("Система", data.message);
+
+    // ===== Match =====
     if(data.type==="match") setTimeout(()=>createPeer(data.role==="caller"),100);
 
+    // ===== WebRTC SDP =====
     if(data.sdp && peer){
       await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
       if(data.sdp.type==="offer"){
@@ -88,10 +93,12 @@ startBtn.onclick = async () => {
       }
     }
 
+    // ===== ICE =====
     if(data.candidate && peer){
       try{ await peer.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){console.log(e);}
     }
 
+    // ===== Chat =====
     if(data.type==="chat") appendMessage("Собеседник", data.message);
 
     if(data.type==="leave") stop();
@@ -101,7 +108,7 @@ startBtn.onclick = async () => {
 stopBtn.onclick = stop;
 nextBtn.onclick = () => alert("Следующий пока что не реализован");
 
-// ======== Peer ========
+// ===== Peer =====
 function createPeer(isCaller){
   peer = new RTCPeerConnection(config);
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
@@ -116,13 +123,13 @@ function createPeer(isCaller){
   }
 }
 
-// ======== FLIP CAMERA ========
+// ===== Flip Camera =====
 flipBtn.onclick = async () => {
   usingFrontCamera = !usingFrontCamera;
   await getCameraStream();
 };
 
-// ======== MIC TOGGLE ========
+// ===== Mic Toggle =====
 micBtn.onclick = () => {
   if(!localStream) return;
   const audioTrack = localStream.getAudioTracks()[0];
@@ -130,7 +137,7 @@ micBtn.onclick = () => {
   micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
 };
 
-// ======== REMOTE MUTE ========
+// ===== Remote Mute =====
 muteRemoteBtn.onclick = () => {
   if(!remoteVideo.srcObject) return;
   const audioTrack = remoteVideo.srcObject.getAudioTracks()[0];
@@ -138,7 +145,7 @@ muteRemoteBtn.onclick = () => {
   muteRemoteBtn.textContent = audioTrack.enabled ? "🔈" : "🔇";
 };
 
-// ======== CHAT ========
+// ===== Chat Send =====
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
@@ -150,7 +157,7 @@ function sendMessage(){
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
 
-// ======== STOP ========
+// ===== Stop =====
 function stop(){
   startBtn.classList.remove("hidden");
   stopBtn.classList.add("hidden");
@@ -171,12 +178,15 @@ function stop(){
   chatMessages.innerHTML = "";
 }
 
-// ======== OTHER BUTTONS ========
-reportBtn.onclick = () => alert("Жалоба отправлена");
+// ===== Other Buttons =====
+reportBtn.onclick = () => {
+  if(!socket || !peer) return;
+  socket.send(JSON.stringify({ type: "report", reason: "Нарушение правил" }));
+};
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
 
-// ======== PULL-TO-REFRESH ========
+// ===== Pull-to-Refresh =====
 let touchStartY = 0;
 document.addEventListener('touchstart', e => { if(e.touches.length===1) touchStartY = e.touches[0].clientY; });
 document.addEventListener('touchmove', e => {
