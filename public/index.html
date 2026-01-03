@@ -48,6 +48,18 @@
   </div>
 </div>
 
+<!-- Модалка жалобы -->
+<div id="reportModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Пожаловаться на пользователя</h3>
+    <button onclick="sendReport('minor')">🚫 Несовершеннолетний</button>
+    <button onclick="sendReport('violence')">🤢 Шок / насилие</button>
+    <button onclick="sendReport('spam')">📵 Спам / реклама</button>
+    <button onclick="sendReport('aggression')">😡 Агрессия</button>
+    <button onclick="closeReport()">Отмена</button>
+  </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>
