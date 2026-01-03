@@ -12,6 +12,7 @@ const nextBtn = document.getElementById("nextBtn");
 const flipBtn = document.getElementById("flipBtn");
 const micBtn = document.getElementById("micBtn");
 
+const reportBtn = document.getElementById("reportBtn");
 const likeBtn = document.getElementById("likeBtn");
 const muteRemoteBtn = document.getElementById("muteRemoteBtn");
 const giftBtn = document.getElementById("giftBtn");
@@ -65,6 +66,7 @@ startBtn.onclick = async () => {
   nextBtn.classList.remove("hidden");
   flipBtn.classList.remove("hidden");
   micBtn.classList.remove("hidden");
+  reportBtn.classList.remove("hidden");
   likeBtn.classList.remove("hidden");
   muteRemoteBtn.classList.remove("hidden");
   giftBtn.classList.remove("hidden");
@@ -155,6 +157,7 @@ function stop(){
   nextBtn.classList.add("hidden");
   flipBtn.classList.add("hidden");
   micBtn.classList.add("hidden");
+  reportBtn.classList.add("hidden");
   likeBtn.classList.add("hidden");
   muteRemoteBtn.classList.add("hidden");
   giftBtn.classList.add("hidden");
@@ -167,6 +170,11 @@ function stop(){
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
 }
+
+// ======== OTHER BUTTONS ========
+reportBtn.onclick = () => alert("Жалоба отправлена");
+likeBtn.onclick = () => alert("Лайк поставлен");
+giftBtn.onclick = () => alert("Подарок отправлен");
 
 // ======== PULL-TO-REFRESH ========
 let touchStartY = 0;
