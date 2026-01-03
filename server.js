@@ -1,6 +1,5 @@
 const express = require("express");
 const WebSocket = require("ws");
-const path = require("path");
 
 const app = express();
 app.use(express.static("public"));
@@ -29,18 +28,29 @@ wss.on("connection", (ws) => {
   }
 
   ws.on("message", (msg) => {
-    if (ws.partner) {
-      try {
-        const data = JSON.parse(msg.toString());
+    if (!ws.partner) return;
+    try {
+      const data = JSON.parse(msg.toString());
 
-        if (data.type === "chat") {
-          ws.partner.send(JSON.stringify({ type: "chat", message: data.message }));
-        } else {
-          ws.partner.send(msg.toString());
+      if (data.type === "chat") {
+        ws.partner.send(JSON.stringify({ type: "chat", message: data.message }));
+      } else if (data.type === "moderation_log") {
+        console.log("Нарушение модерации:", data.message);
+      } else if (data.type === "report") {
+        console.log("Пользователь получил жалобу, отключаем его от партнёра");
+        if (ws.partner) {
+          ws.partner.send(JSON.stringify({ type: "leave" }));
+          ws.partner.partner = null;
         }
-      } catch (e) {
-        console.log("Ошибка при обработке сообщения:", e);
+        ws.close();
+      } else if (data.type === "leave") {
+        ws.partner.send(JSON.stringify({ type: "leave" }));
+        ws.partner.partner = null;
+      } else {
+        ws.partner.send(msg.toString());
       }
+    } catch (e) {
+      console.log("Ошибка при обработке сообщения:", e);
     }
   });
 
