@@ -1,77 +1,104 @@
-* {
+body, html {
   margin: 0;
   padding: 0;
+  width: 100vw;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  background: #1a1a1a;
+  color: white;
+  overflow: hidden;
+}
+
+.videos-container {
+  display: flex;
+  height: 60vh;
+  padding: 2px;
   box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
-  background: black;
-  font-family: Arial, sans-serif;
-}
-
-#app {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-#videos {
-  height: 60vh;
-  display: flex;
-}
-
-.video-box {
-  flex: 1;
+.local-video-wrapper, .remote-video-wrapper {
   position: relative;
+  width: 50%;
+  margin: 2px;
 }
 
-video {
+.local-video-wrapper video, .remote-video-wrapper video {
   width: 100%;
   height: 100%;
+  background: black;
+  border-radius: 5px;
   object-fit: cover;
 }
 
-/* ЧАТ */
-#chat {
-  height: 40vh;
-  display: flex;
-  flex-direction: column;
-  background: #111;
-}
-
-#messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 6px;
+.controls button, .remote-controls button {
+  position: absolute;
+  padding: 5px;
+  font-size: 16px;
+  opacity: 0.8;
+  border: none;
+  border-radius: 5px;
+  background: #555;
   color: white;
+  cursor: pointer;
 }
 
-#chatInput {
-  height: 10vh;
+.controls button:hover, .remote-controls button:hover { background: #777; }
+
+#flipBtn { top: 5px; right: 5px; }
+#micBtn { top: 50px; right: 5px; }
+#startBtn, #stopBtn, #nextBtn { bottom: 5px; right: 5px; }
+#nextBtn { right: 60px; }
+
+.remote-controls #likeBtn { top: 5px; left: 5px; }
+.remote-controls #muteRemoteBtn { top: 50px; right: 5px; }
+.remote-controls #giftBtn { bottom: 5px; left: 5px; }
+
+.hidden { display: none; }
+
+.chat-container {
+  height: 40vh;
+  background: #222;
+  padding: 5px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.chat-messages {
+  height: 100%;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid #555;
+  border-radius: 5px;
+}
+
+.chat-message { margin: 2px 0; }
+
+.chat-input-fixed {
+  position: fixed;
+  bottom: env(safe-area-inset-bottom, 0);
+  left: 0;
+  width: 100%;
+  display: flex;
+  background: #222;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.chat-input-fixed input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 5px 0 0 5px;
   border: none;
   outline: none;
-  font-size: 16px;
-  padding: 10px;
 }
 
-/* Сообщения поверх видео */
-#overlayMessages {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-}
-
-.overlay-msg {
+.chat-input-fixed button {
+  padding: 8px 15px;
+  border: none;
+  background: #555;
   color: white;
-  background: rgba(0,0,0,0.45);
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
 }
+
+.chat-input-fixed button:hover { background: #777; }
