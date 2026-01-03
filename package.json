@@ -1,7 +1,7 @@
 {
   "name": "chat-roulette",
   "version": "1.0.0",
-  "description": "Simple WebRTC chat roulette 18+",
+  "description": "Chat roulette 18+ with moderation",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
