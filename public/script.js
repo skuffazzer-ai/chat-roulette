@@ -1,6 +1,7 @@
 let localStream;
 let peer;
 let socket;
+let usingFrontCamera = true;
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
@@ -31,10 +32,13 @@ function showAllButtons() {
 async function getCameraStream() {
   if (localStream) localStream.getTracks().forEach(t => t.stop());
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: usingFrontCamera ? "user" : "environment" },
+      audio: true
+    });
     localVideo.srcObject = localStream;
-    localVideo.muted = true; // Для autoplay на iOS
-    localVideo.play();
+    localVideo.muted = true;
+    await localVideo.play();
   } catch (e) {
     alert("Ошибка доступа к камере/микрофону. Разрешите доступ.");
     throw e;
@@ -75,11 +79,13 @@ startBtn.onclick = async () => {
 function createPeer(isCaller) {
   peer = new RTCPeerConnection(config);
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
+
   peer.ontrack = e => {
     remoteVideo.srcObject = e.streams[0];
     remoteVideo.volume = 1;
     remoteVideo.play();
   };
+
   peer.onicecandidate = e => { if (e.candidate) socket.send(JSON.stringify({ candidate: e.candidate })); };
 
   if (isCaller) {
@@ -90,20 +96,18 @@ function createPeer(isCaller) {
   }
 }
 
-// ====== Кнопки ======
+// ====== FLIP CAMERA ======
 flipBtn.onclick = async () => {
-  if (!localStream) return;
-  const videoTrack = localStream.getVideoTracks()[0];
-  const constraints = { video: { facingMode: videoTrack.getSettings().facingMode === "user" ? "environment" : "user" } };
-  localStream.getTracks().forEach(t => t.stop());
-  localStream = await navigator.mediaDevices.getUserMedia(constraints);
-  localVideo.srcObject = localStream;
+  usingFrontCamera = !usingFrontCamera;
+  await getCameraStream();
   if (peer) {
+    const videoTrack = localStream.getVideoTracks()[0];
     const sender = peer.getSenders().find(s => s.track.kind === "video");
-    if (sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
+    if (sender) sender.replaceTrack(videoTrack);
   }
 };
 
+// ====== MIC TOGGLE ======
 micBtn.onclick = () => {
   if (!localStream) return;
   const audioTrack = localStream.getAudioTracks()[0];
@@ -111,6 +115,7 @@ micBtn.onclick = () => {
   micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
 };
 
+// ====== REMOTE MUTE ======
 muteRemoteBtn.onclick = () => {
   if (!remoteVideo.srcObject) return;
   const audioTrack = remoteVideo.srcObject.getAudioTracks()[0];
@@ -138,12 +143,15 @@ sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
 
 // ====== STOP ======
+stopBtn.onclick = stop;
 function stop() {
   startBtn.classList.remove("hidden");
   [stopBtn, nextBtn, flipBtn, micBtn, reportBtn, likeBtn, muteRemoteBtn, giftBtn].forEach(b => b.classList.add("hidden"));
-  if (peer) peer.close();
-  if (socket) socket.close();
-  if (localStream) localStream.getTracks().forEach(t => t.stop());
+
+  if (peer) { peer.close(); peer = null; }
+  if (socket) { socket.close(); socket = null; }
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
@@ -153,3 +161,13 @@ function stop() {
 reportBtn.onclick = () => alert("Жалоба отправлена");
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
+
+// ====== Pull-to-refresh для iPhone ======
+let touchStartY = 0;
+document.addEventListener('touchstart', e => { if (e.touches.length === 1) touchStartY = e.touches[0].clientY; });
+document.addEventListener('touchend', e => {
+  if (e.changedTouches.length === 1) {
+    const touchEndY = e.changedTouches[0].clientY;
+    if (touchEndY - touchStartY > 150) location.reload();
+  }
+});
