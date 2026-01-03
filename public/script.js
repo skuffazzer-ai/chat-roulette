@@ -37,8 +37,13 @@ async function getCameraStream() {
       audio: true
     });
     localVideo.srcObject = localStream;
-    localVideo.muted = true;
+    localVideo.muted = true; // локальное видео muted для autoplay
     await localVideo.play();
+
+    // включаем аудио трек для надёжности
+    const audioTrack = localStream.getAudioTracks()[0];
+    if (audioTrack) audioTrack.enabled = true;
+
   } catch (e) {
     alert("Ошибка доступа к камере/микрофону. Разрешите доступ.");
     throw e;
@@ -51,10 +56,10 @@ startBtn.onclick = async () => {
   await getCameraStream();
   showAllButtons();
 
-  // WebSocket
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
+
     if (data.type === "match") setTimeout(() => createPeer(data.role === "caller"), 100);
 
     if (data.sdp && peer) {
@@ -78,12 +83,18 @@ startBtn.onclick = async () => {
 // ====== Peer ======
 function createPeer(isCaller) {
   peer = new RTCPeerConnection(config);
+
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
 
   peer.ontrack = e => {
     remoteVideo.srcObject = e.streams[0];
+    remoteVideo.muted = false; // звук включен
     remoteVideo.volume = 1;
-    remoteVideo.play();
+    remoteVideo.play().catch(err => console.log(err));
+
+    // включаем аудио трек удалённого потока на всякий случай
+    const audioTrack = e.streams[0].getAudioTracks()[0];
+    if (audioTrack) audioTrack.enabled = true;
   };
 
   peer.onicecandidate = e => { if (e.candidate) socket.send(JSON.stringify({ candidate: e.candidate })); };
@@ -100,6 +111,7 @@ function createPeer(isCaller) {
 flipBtn.onclick = async () => {
   usingFrontCamera = !usingFrontCamera;
   await getCameraStream();
+
   if (peer && localStream) {
     const videoTrack = localStream.getVideoTracks()[0];
     const sender = peer.getSenders().find(s => s.track.kind === "video");
