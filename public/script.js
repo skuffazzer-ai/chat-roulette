@@ -1,7 +1,6 @@
 let localStream;
 let peer;
 let socket;
-let usingFrontCamera = true;
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
@@ -23,60 +22,35 @@ const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Функция для показа всех кнопок ========
+// ====== Показ всех кнопок ======
 function showAllButtons() {
   [stopBtn, nextBtn, flipBtn, micBtn, reportBtn, likeBtn, muteRemoteBtn, giftBtn].forEach(b => b.classList.remove("hidden"));
 }
 
-// ======== Получаем камеру ========
+// ====== Получаем камеру и микрофон ======
 async function getCameraStream() {
   if (localStream) localStream.getTracks().forEach(t => t.stop());
-
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  const videoDevices = devices.filter(d => d.kind === "videoinput");
-  let targetDevice = videoDevices[0];
-
-  // iPhone/iPad/Android
-  targetDevice = videoDevices.find(d =>
-    usingFrontCamera ? d.label.toLowerCase().includes("front") : d.label.toLowerCase().includes("back")
-  ) || videoDevices[0];
-
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: { deviceId: { exact: targetDevice.deviceId } },
-    audio: true
-  });
-
-  localVideo.srcObject = localStream;
-
-  if (peer) {
-    const sender = peer.getSenders().find(s => s.track.kind === 'video');
-    if (sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localVideo.srcObject = localStream;
+    localVideo.muted = true; // Для autoplay на iOS
+    localVideo.play();
+  } catch (e) {
+    alert("Ошибка доступа к камере/микрофону. Разрешите доступ.");
+    throw e;
   }
 }
 
-// ======== Чат ========
-function appendMessage(sender, text) {
-  const div = document.createElement("div");
-  div.className = "chat-message";
-  div.textContent = `${sender}: ${text}`;
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// ======== START/STOP/NEXT ========
+// ====== START кнопка ======
 startBtn.onclick = async () => {
   startBtn.classList.add("hidden");
-  showAllButtons();
-
   await getCameraStream();
+  showAllButtons();
 
   // WebSocket
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
-  socket.onopen = () => console.log("Socket connected");
-
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
-
     if (data.type === "match") setTimeout(() => createPeer(data.role === "caller"), 100);
 
     if (data.sdp && peer) {
@@ -97,14 +71,15 @@ startBtn.onclick = async () => {
   };
 };
 
-stopBtn.onclick = stop;
-nextBtn.onclick = () => alert("Следующий пока что не реализован");
-
-// ======== Peer ========
+// ====== Peer ======
 function createPeer(isCaller) {
   peer = new RTCPeerConnection(config);
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
-  peer.ontrack = e => remoteVideo.srcObject = e.streams[0];
+  peer.ontrack = e => {
+    remoteVideo.srcObject = e.streams[0];
+    remoteVideo.volume = 1;
+    remoteVideo.play();
+  };
   peer.onicecandidate = e => { if (e.candidate) socket.send(JSON.stringify({ candidate: e.candidate })); };
 
   if (isCaller) {
@@ -115,13 +90,20 @@ function createPeer(isCaller) {
   }
 }
 
-// ======== FLIP CAMERA ========
+// ====== Кнопки ======
 flipBtn.onclick = async () => {
-  usingFrontCamera = !usingFrontCamera;
-  await getCameraStream();
+  if (!localStream) return;
+  const videoTrack = localStream.getVideoTracks()[0];
+  const constraints = { video: { facingMode: videoTrack.getSettings().facingMode === "user" ? "environment" : "user" } };
+  localStream.getTracks().forEach(t => t.stop());
+  localStream = await navigator.mediaDevices.getUserMedia(constraints);
+  localVideo.srcObject = localStream;
+  if (peer) {
+    const sender = peer.getSenders().find(s => s.track.kind === "video");
+    if (sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
+  }
 };
 
-// ======== MIC TOGGLE ========
 micBtn.onclick = () => {
   if (!localStream) return;
   const audioTrack = localStream.getAudioTracks()[0];
@@ -129,7 +111,6 @@ micBtn.onclick = () => {
   micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
 };
 
-// ======== REMOTE MUTE ========
 muteRemoteBtn.onclick = () => {
   if (!remoteVideo.srcObject) return;
   const audioTrack = remoteVideo.srcObject.getAudioTracks()[0];
@@ -137,45 +118,38 @@ muteRemoteBtn.onclick = () => {
   muteRemoteBtn.textContent = audioTrack.enabled ? "🔈" : "🔇";
 };
 
-// ======== CHAT ========
+// ====== Чат ======
+function appendMessage(sender, text) {
+  const div = document.createElement("div");
+  div.className = "chat-message";
+  div.textContent = `${sender}: ${text}`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 function sendMessage() {
   const msg = chatInput.value.trim();
   if (!msg) return;
   appendMessage("Вы", msg);
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "chat", message: msg }));
-  }
+  if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "chat", message: msg }));
   chatInput.value = "";
 }
-
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
 
-// ======== STOP ========
+// ====== STOP ======
 function stop() {
   startBtn.classList.remove("hidden");
   [stopBtn, nextBtn, flipBtn, micBtn, reportBtn, likeBtn, muteRemoteBtn, giftBtn].forEach(b => b.classList.add("hidden"));
-
   if (peer) peer.close();
   if (socket) socket.close();
   if (localStream) localStream.getTracks().forEach(t => t.stop());
-
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
 }
 
-// ======== OTHER BUTTONS ========
+// ====== Другие кнопки ======
 reportBtn.onclick = () => alert("Жалоба отправлена");
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
-
-// ======== PULL-TO-REFRESH ========
-let touchStartY = 0;
-document.addEventListener('touchstart', e => { if (e.touches.length === 1) touchStartY = e.touches[0].clientY; });
-document.addEventListener('touchmove', e => {
-  if (e.touches.length === 1) {
-    const touchEndY = e.touches[0].clientY;
-    if (touchEndY - touchStartY > 100) location.reload();
-  }
-});
