@@ -187,15 +187,23 @@ function stop() {
 
 // ====== Следующий собеседник ======
 nextBtn.onclick = () => {
+  // Отправляем серверу leave, чтобы предыдущий партнер освободился
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "leave" }));
+  }
+
+  // Закрываем текущий PeerConnection и WebSocket
   if (peer) { peer.close(); peer = null; }
   if (socket) { socket.close(); socket = null; }
 
+  // Очищаем удалённое видео и чат
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
 
-  // переподключаем к новому пользователю
+  // Подключаемся к серверу заново
   connectToServer();
 };
+
 
 // ====== Другие кнопки ======
 reportBtn.onclick = () => alert("Жалоба отправлена");
