@@ -26,14 +26,11 @@ const ageGate = document.getElementById("ageGate");
 const confirmAgeBtn = document.getElementById("confirmAgeBtn");
 const mainContent = document.getElementById("mainContent");
 
-const reportModal = document.getElementById("reportModal");
-
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 window.onload = () => {
-  reportModal.classList.add("hidden");
-  mainContent.classList.add("hidden");
+  mainContent.classList.add("hidden"); // контент скрыт до подтверждения возраста
 };
 
 // ===== ПОДТВЕРЖДЕНИЕ ВОЗРАСТА =====
@@ -197,20 +194,41 @@ function stop(){
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
 
-// ===== REPORT MODAL =====
-reportBtn.onclick = () => reportModal.classList.remove("hidden");
-function closeReport() { reportModal.classList.add("hidden"); }
-function sendReport(reason){
-  if(!currentPeerId) return;
+// ===== REPORT MODAL ДИНАМИЧЕСКИ =====
+reportBtn.onclick = () => {
+  if (!document.getElementById("reportModal")) {
+    const modal = document.createElement("div");
+    modal.id = "reportModal";
+    modal.className = "modal";
 
-  if(socket){
-    socket.send(JSON.stringify({
-      type: "report-user",
-      reason,
-      reportedUserId: currentPeerId
-    }));
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3>Пожаловаться на пользователя</h3>
+        <button onclick="sendReport('minor')">🚫 Несовершеннолетний</button>
+        <button onclick="sendReport('violence')">🤢 Шок / насилие</button>
+        <button onclick="sendReport('spam')">📵 Спам / реклама</button>
+        <button onclick="sendReport('aggression')">😡 Агрессия</button>
+        <button onclick="closeReport()">Отмена</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
   }
 
+  document.getElementById("reportModal").classList.remove("hidden");
+};
+
+function closeReport() {
+  const modal = document.getElementById("reportModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function sendReport(reason){
+  if(!currentPeerId || !socket) return;
+  socket.send(JSON.stringify({
+    type: "report-user",
+    reason,
+    reportedUserId: currentPeerId
+  }));
   alert("Жалоба отправлена: " + reason);
   closeReport();
 }
