@@ -30,13 +30,8 @@ wss.on("connection", (ws) => {
   ws.on("message", (msg) => {
     if (ws.partner) {
       try {
-        const data = JSON.parse(msg.toString());
-        if (data.type === "chat" || data.sdp || data.candidate) {
-          ws.partner.send(msg.toString());
-        }
-      } catch (e) {
-        console.log("Ошибка при обработке сообщения:", e);
-      }
+        ws.partner.send(msg.toString());
+      } catch(e){ console.log(e); }
     }
   });
 
