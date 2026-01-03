@@ -2,41 +2,50 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat Roulette</title>
+  <title>Chat Roulette 18+</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="videos-container">
-  <div class="local-video-wrapper">
-    <video id="localVideo" autoplay muted playsinline></video>
-    <div class="controls">
-      <button id="flipBtn" class="hidden">🔄</button>
-      <button id="micBtn" class="hidden">🎤</button>
-      <button id="startBtn">▶️</button>
-      <button id="stopBtn" class="hidden">⏹️</button>
-      <button id="nextBtn" class="hidden">⏭️</button>
-    </div>
-  </div>
-  <div class="remote-video-wrapper">
-    <video id="remoteVideo" autoplay playsinline></video>
-    <div class="remote-controls">
-      <button id="reportBtn" class="hidden">⚠️</button>
-      <button id="likeBtn" class="hidden">❤️</button>
-      <button id="muteRemoteBtn" class="hidden">🔇</button>
-      <button id="giftBtn" class="hidden">🎁</button>
-    </div>
-  </div>
+<!-- 18+ предупреждение -->
+<div id="ageGate" class="age-gate">
+  <h2>ВНИМАНИЕ: 18+</h2>
+  <p>Сайт содержит откровенный контент сексуального характера. Продолжая, вы подтверждаете, что вам исполнилось 18 лет.</p>
+  <button id="confirmAgeBtn">Мне 18+, продолжить</button>
 </div>
 
-<div class="chat-container">
-  <div id="chatMessages" class="chat-messages"></div>
-</div>
+<div id="mainContent" class="hidden">
+  <div class="videos-container">
+    <div class="local-video-wrapper">
+      <video id="localVideo" autoplay muted playsinline></video>
+      <div class="controls">
+        <button id="flipBtn" class="hidden">🔄</button>
+        <button id="micBtn" class="hidden">🎤</button>
+        <button id="startBtn">▶️</button>
+        <button id="stopBtn" class="hidden">⏹️</button>
+        <button id="nextBtn" class="hidden">⏭️</button>
+      </div>
+    </div>
+    <div class="remote-video-wrapper">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div class="remote-controls">
+        <button id="reportBtn" class="hidden">⚠️</button>
+        <button id="likeBtn" class="hidden">❤️</button>
+        <button id="muteRemoteBtn" class="hidden">🔇</button>
+        <button id="giftBtn" class="hidden">🎁</button>
+      </div>
+    </div>
+  </div>
 
-<div class="chat-input-fixed">
-  <input type="text" id="chatInput" placeholder="Напишите сообщение..." />
-  <button id="sendBtn">Отправить</button>
+  <div class="chat-container">
+    <div id="chatMessages" class="chat-messages"></div>
+  </div>
+
+  <div class="chat-input-fixed">
+    <input type="text" id="chatInput" placeholder="Напишите сообщение..." />
+    <button id="sendBtn">Отправить</button>
+  </div>
 </div>
 
 <script src="script.js"></script>
