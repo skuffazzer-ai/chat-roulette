@@ -1,161 +1,74 @@
-let localStream;
-let peer;
-let socket;
-let usingFrontCamera = true;
+/* ================== PUSH ОБНОВЛЕНИЕ ================== */
+// Сервер должен прислать: { type: "reload" }
+const ws = new WebSocket(
+  (location.protocol === "https:" ? "wss://" : "ws://") + location.host
+);
 
-const localVideo = document.getElementById("localVideo");
-const remoteVideo = document.getElementById("remoteVideo");
-
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-const nextBtn = document.getElementById("nextBtn");
-const flipBtn = document.getElementById("flipBtn");
-const micBtn = document.getElementById("micBtn");
-
-const reportBtn = document.getElementById("reportBtn");
-const likeBtn = document.getElementById("likeBtn");
-const muteRemoteBtn = document.getElementById("muteRemoteBtn");
-const giftBtn = document.getElementById("giftBtn");
-
-const chatInput = document.getElementById("chatInput");
-const chatMessages = document.getElementById("chatMessages");
-const sendBtn = document.getElementById("sendBtn");
-
-const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-
-async function getCameraStream() {
-  if(localStream) localStream.getTracks().forEach(t => t.stop());
-
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: true
-  });
-
-  localVideo.srcObject = localStream;
-}
-
-function appendMessage(sender, text){
-  const div = document.createElement("div");
-  div.className = "chat-message";
-  div.textContent = `${sender}: ${text}`;
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-startBtn.onclick = async () => {
-  startBtn.classList.add("hidden");
-  stopBtn.classList.remove("hidden");
-  nextBtn.classList.remove("hidden");
-  flipBtn.classList.remove("hidden");
-  micBtn.classList.remove("hidden");
-  reportBtn.classList.remove("hidden");
-  likeBtn.classList.remove("hidden");
-  muteRemoteBtn.classList.remove("hidden");
-  giftBtn.classList.remove("hidden");
-
-  await getCameraStream();
-
-  socket = new WebSocket(location.protocol==="https:" ? `wss://${location.host}` : `ws://${location.host}`);
-  socket.onmessage = async (event) => {
-    const data = JSON.parse(event.data);
-
-    if(data.type==="match") setTimeout(()=>createPeer(data.role==="caller"),100);
-
-    if(data.sdp && peer){
-      await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
-      if(data.sdp.type==="offer"){
-        const answer = await peer.createAnswer();
-        await peer.setLocalDescription(answer);
-        socket.send(JSON.stringify({sdp: peer.localDescription}));
-      }
+ws.onmessage = (e) => {
+  try {
+    const data = JSON.parse(e.data);
+    if (data.type === "reload") {
+      location.reload();
     }
-
-    if(data.candidate && peer){
-      try{ await peer.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){console.log(e);}
-    }
-
-    if(data.type==="chat") appendMessage("Собеседник", data.message);
-
-    if(data.type==="leave") stop();
-  };
+  } catch {}
 };
 
-stopBtn.onclick = stop;
-nextBtn.onclick = () => alert("Следующий пока что не реализован");
+/* ================== ЧАТ + КЛАВИАТУРА ================== */
+const input = document.getElementById("chatInput");
+const messages = document.getElementById("messages");
+const videos = document.getElementById("videos");
 
-function createPeer(isCaller){
-  peer = new RTCPeerConnection(config);
-  localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
-  peer.ontrack = e => remoteVideo.srcObject = e.streams[0];
-  peer.onicecandidate = e => { if(e.candidate) socket.send(JSON.stringify({candidate:e.candidate})); };
+let overlay = null;
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  if(isCaller){
-    peer.createOffer().then(offer => {
-      peer.setLocalDescription(offer);
-      socket.send(JSON.stringify({sdp: offer}));
-    });
+/* Открыли клавиатуру */
+input.addEventListener("focus", () => {
+  if (!isMobile) return;
+
+  document.body.style.overflow = "hidden";
+  videos.style.height = "50vh";
+  messages.style.display = "none";
+
+  overlay = document.createElement("div");
+  overlay.id = "overlayMessages";
+  videos.appendChild(overlay);
+});
+
+/* Печать */
+input.addEventListener("input", () => {
+  if (!overlay) return;
+  overlay.innerHTML = "";
+
+  if (input.value.trim()) {
+    const msg = document.createElement("div");
+    msg.className = "overlay-msg";
+    msg.textContent = input.value;
+    overlay.appendChild(msg);
   }
-}
+});
 
-flipBtn.onclick = async () => {
-  usingFrontCamera = !usingFrontCamera;
-  await getCameraStream();
-};
+/* Отправка */
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && input.value.trim()) {
+    const div = document.createElement("div");
+    div.textContent = input.value;
+    messages.appendChild(div);
 
-micBtn.onclick = () => {
-  if(!localStream) return;
-  const audioTrack = localStream.getAudioTracks()[0];
-  audioTrack.enabled = !audioTrack.enabled;
-  micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
-};
+    input.value = "";
+    if (overlay) overlay.innerHTML = "";
+  }
+});
 
-muteRemoteBtn.onclick = () => {
-  if(!remoteVideo.srcObject) return;
-  const audioTrack = remoteVideo.srcObject.getAudioTracks()[0];
-  if(audioTrack) audioTrack.enabled = !audioTrack.enabled;
-  muteRemoteBtn.textContent = audioTrack.enabled ? "🔈" : "🔇";
-};
+/* Закрыли клавиатуру */
+input.addEventListener("blur", () => {
+  if (!isMobile) return;
 
-function sendMessage(){
-  const msg = chatInput.value.trim();
-  if(!msg) return;
-  appendMessage("Вы", msg);
-  socket.send(JSON.stringify({type:"chat", message: msg}));
-  chatInput.value="";
-}
+  document.body.style.overflow = "";
+  videos.style.height = "60vh";
+  messages.style.display = "block";
 
-sendBtn.onclick = sendMessage;
-chatInput.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
-
-function stop(){
-  startBtn.classList.remove("hidden");
-  stopBtn.classList.add("hidden");
-  nextBtn.classList.add("hidden");
-  flipBtn.classList.add("hidden");
-  micBtn.classList.add("hidden");
-  reportBtn.classList.add("hidden");
-  likeBtn.classList.add("hidden");
-  muteRemoteBtn.classList.add("hidden");
-  giftBtn.classList.add("hidden");
-
-  if(peer) peer.close();
-  if(socket) socket.close();
-  if(localStream) localStream.getTracks().forEach(t=>t.stop());
-
-  localVideo.srcObject = null;
-  remoteVideo.srcObject = null;
-  chatMessages.innerHTML = "";
-}
-
-reportBtn.onclick = () => alert("Жалоба отправлена");
-likeBtn.onclick = () => alert("Лайк поставлен");
-giftBtn.onclick = () => alert("Подарок отправлен");
-
-let touchStartY = 0;
-document.addEventListener('touchstart', e => { if(e.touches.length===1) touchStartY = e.touches[0].clientY; });
-document.addEventListener('touchmove', e => {
-  if(e.touches.length===1){
-    const touchEndY = e.touches[0].clientY;
-    if(touchEndY - touchStartY > 100) location.reload();
+  if (overlay) {
+    overlay.remove();
+    overlay = null;
   }
 });
