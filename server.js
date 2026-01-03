@@ -15,7 +15,6 @@ let waitingUser = null;
 wss.on("connection", (ws) => {
   ws.partner = null;
 
-  // ===== Matchmaking =====
   if (waitingUser) {
     ws.partner = waitingUser;
     waitingUser.partner = ws;
@@ -28,7 +27,6 @@ wss.on("connection", (ws) => {
     waitingUser = ws;
   }
 
-  // ===== WebSocket Messages =====
   ws.on("message", (msg) => {
     if (ws.partner) {
       try {
@@ -37,7 +35,6 @@ wss.on("connection", (ws) => {
     }
   });
 
-  // ===== Connection Close =====
   ws.on("close", () => {
     if (ws === waitingUser) waitingUser = null;
     if (ws.partner) {
