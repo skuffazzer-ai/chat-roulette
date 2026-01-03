@@ -27,27 +27,12 @@ const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 async function getCameraStream() {
   if(localStream) localStream.getTracks().forEach(t => t.stop());
 
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  const videoDevices = devices.filter(d => d.kind === "videoinput");
-  let targetDevice = videoDevices[0];
-
-  if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
-    targetDevice = videoDevices.find(d =>
-      usingFrontCamera ? d.label.toLowerCase().includes("front") : d.label.toLowerCase().includes("back")
-    ) || videoDevices[0];
-  }
-
   localStream = await navigator.mediaDevices.getUserMedia({
-    video: { deviceId: { exact: targetDevice.deviceId } },
+    video: true,
     audio: true
   });
 
   localVideo.srcObject = localStream;
-
-  if(peer){
-    const sender = peer.getSenders().find(s => s.track.kind==='video');
-    if(sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
-  }
 }
 
 // ===== Чат =====
