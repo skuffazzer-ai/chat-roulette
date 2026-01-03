@@ -29,9 +29,7 @@ wss.on("connection", (ws) => {
 
   ws.on("message", (msg) => {
     if (ws.partner) {
-      try {
-        ws.partner.send(msg.toString());
-      } catch(e){ console.log(e); }
+      try{ ws.partner.send(msg.toString()); } catch(e){ console.log(e); }
     }
   });
 
