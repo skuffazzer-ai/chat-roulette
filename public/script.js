@@ -2,7 +2,6 @@ let localStream;
 let peer;
 let socket;
 let usingFrontCamera = true;
-let currentPeerId = null;
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
@@ -13,7 +12,6 @@ const nextBtn = document.getElementById("nextBtn");
 const flipBtn = document.getElementById("flipBtn");
 const micBtn = document.getElementById("micBtn");
 
-const reportBtn = document.getElementById("reportBtn");
 const likeBtn = document.getElementById("likeBtn");
 const muteRemoteBtn = document.getElementById("muteRemoteBtn");
 const giftBtn = document.getElementById("giftBtn");
@@ -28,18 +26,13 @@ const mainContent = document.getElementById("mainContent");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ===== ИНИЦИАЛИЗАЦИЯ =====
-window.onload = () => {
-  mainContent.classList.add("hidden"); // контент скрыт до подтверждения возраста
-};
-
-// ===== ПОДТВЕРЖДЕНИЕ ВОЗРАСТА =====
+// ===== Подтверждение возраста =====
 confirmAgeBtn.onclick = () => {
   ageGate.classList.add("hidden");
   mainContent.classList.remove("hidden");
 };
 
-// ===== КАМЕРА =====
+// ===== Получаем камеру =====
 async function getCameraStream() {
   if(localStream) localStream.getTracks().forEach(t => t.stop());
 
@@ -66,7 +59,7 @@ async function getCameraStream() {
   }
 }
 
-// ===== ЧАТ =====
+// ===== Чат =====
 function appendMessage(sender, text){
   const div = document.createElement("div");
   div.className = "chat-message";
@@ -75,14 +68,20 @@ function appendMessage(sender, text){
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// ===== START / STOP =====
+// ===== Проверка сообщений (первая модерация) =====
+function isMessageAllowed(msg){
+  const bannedWords = ["спам", "реклама", "шок", "насилие"];
+  const lower = msg.toLowerCase();
+  return !bannedWords.some(word => lower.includes(word));
+}
+
+// ===== START / STOP / NEXT =====
 startBtn.onclick = async () => {
   startBtn.classList.add("hidden");
   stopBtn.classList.remove("hidden");
   nextBtn.classList.remove("hidden");
   flipBtn.classList.remove("hidden");
   micBtn.classList.remove("hidden");
-  reportBtn.classList.remove("hidden");
   likeBtn.classList.remove("hidden");
   muteRemoteBtn.classList.remove("hidden");
   giftBtn.classList.remove("hidden");
@@ -93,12 +92,7 @@ startBtn.onclick = async () => {
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
 
-    if(data.type==="match") {
-      setTimeout(()=>{
-        createPeer(data.role==="caller");
-        currentPeerId = socket.id;
-      },100);
-    }
+    if(data.type==="match") setTimeout(()=>createPeer(data.role==="caller"),100);
 
     if(data.sdp && peer){
       await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -113,7 +107,11 @@ startBtn.onclick = async () => {
       try{ await peer.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){console.log(e);}
     }
 
-    if(data.type==="chat") appendMessage("Собеседник", data.message);
+    if(data.type==="chat"){
+      if(isMessageAllowed(data.message)) appendMessage("Собеседник", data.message);
+      else appendMessage("Система", "Сообщение заблокировано модерацией");
+    }
+
     if(data.type==="leave") stop();
   };
 };
@@ -121,7 +119,7 @@ startBtn.onclick = async () => {
 stopBtn.onclick = stop;
 nextBtn.onclick = () => alert("Следующий пока что не реализован");
 
-// ===== PEER =====
+// ===== Peer =====
 function createPeer(isCaller){
   peer = new RTCPeerConnection(config);
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
@@ -136,13 +134,12 @@ function createPeer(isCaller){
   }
 }
 
-// ===== FLIP CAMERA =====
+// ===== Камера / Микрофон / Видео =====
 flipBtn.onclick = async () => {
   usingFrontCamera = !usingFrontCamera;
   await getCameraStream();
 };
 
-// ===== MIC =====
 micBtn.onclick = () => {
   if(!localStream) return;
   const audioTrack = localStream.getAudioTracks()[0];
@@ -150,7 +147,6 @@ micBtn.onclick = () => {
   micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
 };
 
-// ===== REMOTE MUTE =====
 muteRemoteBtn.onclick = () => {
   if(!remoteVideo.srcObject) return;
   const audioTrack = remoteVideo.srcObject.getAudioTracks()[0];
@@ -158,11 +154,13 @@ muteRemoteBtn.onclick = () => {
   muteRemoteBtn.textContent = audioTrack.enabled ? "🔈" : "🔇";
 };
 
-// ===== CHAT SEND =====
+// ===== Chat send =====
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
-  appendMessage("Вы", msg);
+  if(isMessageAllowed(msg)) appendMessage("Вы", msg);
+  else appendMessage("Система", "Ваше сообщение заблокировано модерацией");
+
   socket.send(JSON.stringify({type:"chat", message: msg}));
   chatInput.value="";
 }
@@ -176,7 +174,6 @@ function stop(){
   nextBtn.classList.add("hidden");
   flipBtn.classList.add("hidden");
   micBtn.classList.add("hidden");
-  reportBtn.classList.add("hidden");
   likeBtn.classList.add("hidden");
   muteRemoteBtn.classList.add("hidden");
   giftBtn.classList.add("hidden");
@@ -193,52 +190,3 @@ function stop(){
 // ===== LIKE / GIFT =====
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
-
-// ===== REPORT MODAL ДИНАМИЧЕСКИ =====
-reportBtn.onclick = () => {
-  if (!document.getElementById("reportModal")) {
-    const modal = document.createElement("div");
-    modal.id = "reportModal";
-    modal.className = "modal";
-
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3>Пожаловаться на пользователя</h3>
-        <button onclick="sendReport('minor')">🚫 Несовершеннолетний</button>
-        <button onclick="sendReport('violence')">🤢 Шок / насилие</button>
-        <button onclick="sendReport('spam')">📵 Спам / реклама</button>
-        <button onclick="sendReport('aggression')">😡 Агрессия</button>
-        <button onclick="closeReport()">Отмена</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-
-  document.getElementById("reportModal").classList.remove("hidden");
-};
-
-function closeReport() {
-  const modal = document.getElementById("reportModal");
-  if (modal) modal.classList.add("hidden");
-}
-
-function sendReport(reason){
-  if(!currentPeerId || !socket) return;
-  socket.send(JSON.stringify({
-    type: "report-user",
-    reason,
-    reportedUserId: currentPeerId
-  }));
-  alert("Жалоба отправлена: " + reason);
-  closeReport();
-}
-
-// ===== PULL-TO-REFRESH =====
-let touchStartY = 0;
-document.addEventListener('touchstart', e => { if(e.touches.length===1) touchStartY = e.touches[0].clientY; });
-document.addEventListener('touchmove', e => {
-  if(e.touches.length===1){
-    const touchEndY = e.touches[0].clientY;
-    if(touchEndY - touchStartY > 100) location.reload();
-  }
-});
