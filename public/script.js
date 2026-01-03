@@ -45,18 +45,8 @@ async function getCameraStream() {
   localVideo.srcObject = localStream;
 
   if(peer){
-    // ===== Обновляем видео и аудио треки =====
-    const videoSender = peer.getSenders().find(s => s.track.kind==='video');
-    if(videoSender) videoSender.replaceTrack(localStream.getVideoTracks()[0]);
-
-    const audioSender = peer.getSenders().find(s => s.track.kind==='audio');
-    if(audioSender) audioSender.replaceTrack(localStream.getAudioTracks()[0]);
-  }
-
-  // Синхронизация кнопки микрофона
-  if(localStream){
-    const audioTrack = localStream.getAudioTracks()[0];
-    micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
+    const sender = peer.getSenders().find(s => s.track.kind==='video');
+    if(sender) sender.replaceTrack(localStream.getVideoTracks()[0]);
   }
 }
 
@@ -87,13 +77,8 @@ startBtn.onclick = async () => {
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
 
-    // ===== Системные уведомления =====
-    if(data.type === "alert") appendMessage("Система", data.message);
-
-    // ===== Match =====
     if(data.type==="match") setTimeout(()=>createPeer(data.role==="caller"),100);
 
-    // ===== WebRTC SDP =====
     if(data.sdp && peer){
       await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
       if(data.sdp.type==="offer"){
@@ -103,12 +88,10 @@ startBtn.onclick = async () => {
       }
     }
 
-    // ===== ICE =====
     if(data.candidate && peer){
       try{ await peer.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){console.log(e);}
     }
 
-    // ===== Chat =====
     if(data.type==="chat") appendMessage("Собеседник", data.message);
 
     if(data.type==="leave") stop();
@@ -189,10 +172,7 @@ function stop(){
 }
 
 // ===== Other Buttons =====
-reportBtn.onclick = () => {
-  if(!socket || !peer) return;
-  socket.send(JSON.stringify({ type: "report", reason: "Нарушение правил" }));
-};
+reportBtn.onclick = () => alert("Жалоба отправлена");
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
 
