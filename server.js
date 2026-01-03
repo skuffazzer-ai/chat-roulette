@@ -15,11 +15,9 @@ let waitingUser = null;
 const reports = {};
 const bans = {};
 
-// ===== CONNECTION =====
 wss.on("connection", (ws) => {
   ws.partner = null;
 
-  // Check ban
   if(bans[ws.id] && bans[ws.id] > Date.now()){
     ws.send(JSON.stringify({type:"banned"}));
     ws.close();
@@ -46,16 +44,13 @@ wss.on("connection", (ws) => {
         ws.partner.send(JSON.stringify({ type:"chat", message:data.message }));
       }
 
-      // ===== REPORT USER =====
       if(data.type==="report-user" && ws.partner){
         const reportedId = data.reportedUserId;
         if(!reports[reportedId]) reports[reportedId] = [];
         reports[reportedId].push({from: ws.id, reason: data.reason, time: Date.now()});
 
-        // Minor => instant ban
         if(data.reason==="minor") bans[reportedId] = Date.now() + 24*60*60*1000;
 
-        // 3 жалобы => кик
         if(reports[reportedId].length>=3 && ws.partner){
           ws.partner.send(JSON.stringify({type:"force-disconnect"}));
         }
