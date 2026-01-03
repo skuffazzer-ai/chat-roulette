@@ -100,7 +100,7 @@ function createPeer(isCaller) {
 flipBtn.onclick = async () => {
   usingFrontCamera = !usingFrontCamera;
   await getCameraStream();
-  if (peer) {
+  if (peer && localStream) {
     const videoTrack = localStream.getVideoTracks()[0];
     const sender = peer.getSenders().find(s => s.track.kind === "video");
     if (sender) sender.replaceTrack(videoTrack);
@@ -162,12 +162,12 @@ reportBtn.onclick = () => alert("Жалоба отправлена");
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
 
-// ====== Pull-to-refresh для iPhone ======
+// ====== Pull-to-refresh для iPhone и Android ======
 let touchStartY = 0;
-document.addEventListener('touchstart', e => { if (e.touches.length === 1) touchStartY = e.touches[0].clientY; });
+let touchEndY = 0;
+
+document.addEventListener('touchstart', e => { if(e.touches.length===1) touchStartY = e.touches[0].clientY; });
+document.addEventListener('touchmove', e => { if(e.touches.length===1) touchEndY = e.touches[0].clientY; });
 document.addEventListener('touchend', e => {
-  if (e.changedTouches.length === 1) {
-    const touchEndY = e.changedTouches[0].clientY;
-    if (touchEndY - touchStartY > 150) location.reload();
-  }
+  if (touchEndY - touchStartY > 150) location.reload();
 });
