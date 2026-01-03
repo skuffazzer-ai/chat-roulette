@@ -30,13 +30,19 @@ const reportModal = document.getElementById("reportModal");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ===== AGE CONFIRM =====
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+window.onload = () => {
+  reportModal.classList.add("hidden");
+  mainContent.classList.add("hidden");
+};
+
+// ===== ПОДТВЕРЖДЕНИЕ ВОЗРАСТА =====
 confirmAgeBtn.onclick = () => {
   ageGate.classList.add("hidden");
   mainContent.classList.remove("hidden");
 };
 
-// ===== CAMERA =====
+// ===== КАМЕРА =====
 async function getCameraStream() {
   if(localStream) localStream.getTracks().forEach(t => t.stop());
 
@@ -63,7 +69,7 @@ async function getCameraStream() {
   }
 }
 
-// ===== CHAT =====
+// ===== ЧАТ =====
 function appendMessage(sender, text){
   const div = document.createElement("div");
   div.className = "chat-message";
