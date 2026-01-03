@@ -93,7 +93,7 @@ startBtn.onclick = async () => {
     if(data.type==="match") {
       setTimeout(()=>{
         createPeer(data.role==="caller");
-        currentPeerId = socket.id; // для модалки
+        currentPeerId = socket.id;
       },100);
     }
 
@@ -111,10 +111,7 @@ startBtn.onclick = async () => {
     }
 
     if(data.type==="chat") appendMessage("Собеседник", data.message);
-
     if(data.type==="leave") stop();
-    if(data.type==="force-disconnect") alert("Пользователь был отключен модерацией");
-    if(data.type==="banned") alert("Вы заблокированы");
   };
 };
 
@@ -199,11 +196,15 @@ reportBtn.onclick = () => reportModal.classList.remove("hidden");
 function closeReport() { reportModal.classList.add("hidden"); }
 function sendReport(reason){
   if(!currentPeerId) return;
-  if(socket) socket.send(JSON.stringify({
-    type: "report-user",
-    reason,
-    reportedUserId: currentPeerId
-  }));
+
+  if(socket){
+    socket.send(JSON.stringify({
+      type: "report-user",
+      reason,
+      reportedUserId: currentPeerId
+    }));
+  }
+
   alert("Жалоба отправлена: " + reason);
   closeReport();
 }
