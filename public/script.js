@@ -21,9 +21,19 @@ const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
 const sendBtn = document.getElementById("sendBtn");
 
+const ageGate = document.getElementById("ageGate");
+const confirmAgeBtn = document.getElementById("confirmAgeBtn");
+const mainContent = document.getElementById("mainContent");
+
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ======== Получаем камеру ========
+// ===== AGE CONFIRM =====
+confirmAgeBtn.onclick = () => {
+  ageGate.classList.add("hidden");
+  mainContent.classList.remove("hidden");
+};
+
+// ===== CAMERA =====
 async function getCameraStream() {
   if(localStream) localStream.getTracks().forEach(t => t.stop());
 
@@ -50,7 +60,7 @@ async function getCameraStream() {
   }
 }
 
-// ======== Чат ========
+// ===== CHAT =====
 function appendMessage(sender, text){
   const div = document.createElement("div");
   div.className = "chat-message";
@@ -59,7 +69,7 @@ function appendMessage(sender, text){
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// ======== START/STOP/NEXT ========
+// ===== START / STOP =====
 startBtn.onclick = async () => {
   startBtn.classList.add("hidden");
   stopBtn.classList.remove("hidden");
@@ -101,7 +111,7 @@ startBtn.onclick = async () => {
 stopBtn.onclick = stop;
 nextBtn.onclick = () => alert("Следующий пока что не реализован");
 
-// ======== Peer ========
+// ===== PEER =====
 function createPeer(isCaller){
   peer = new RTCPeerConnection(config);
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
@@ -116,13 +126,13 @@ function createPeer(isCaller){
   }
 }
 
-// ======== FLIP CAMERA ========
+// ===== FLIP CAMERA =====
 flipBtn.onclick = async () => {
   usingFrontCamera = !usingFrontCamera;
   await getCameraStream();
 };
 
-// ======== MIC TOGGLE ========
+// ===== MIC =====
 micBtn.onclick = () => {
   if(!localStream) return;
   const audioTrack = localStream.getAudioTracks()[0];
@@ -130,7 +140,7 @@ micBtn.onclick = () => {
   micBtn.textContent = audioTrack.enabled ? "🎤" : "🔇";
 };
 
-// ======== REMOTE MUTE ========
+// ===== REMOTE MUTE =====
 muteRemoteBtn.onclick = () => {
   if(!remoteVideo.srcObject) return;
   const audioTrack = remoteVideo.srcObject.getAudioTracks()[0];
@@ -138,7 +148,7 @@ muteRemoteBtn.onclick = () => {
   muteRemoteBtn.textContent = audioTrack.enabled ? "🔈" : "🔇";
 };
 
-// ======== CHAT ========
+// ===== CHAT SEND =====
 function sendMessage(){
   const msg = chatInput.value.trim();
   if(!msg) return;
@@ -146,11 +156,10 @@ function sendMessage(){
   socket.send(JSON.stringify({type:"chat", message: msg}));
   chatInput.value="";
 }
-
 sendBtn.onclick = sendMessage;
 chatInput.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
 
-// ======== STOP ========
+// ===== STOP =====
 function stop(){
   startBtn.classList.remove("hidden");
   stopBtn.classList.add("hidden");
@@ -171,12 +180,27 @@ function stop(){
   chatMessages.innerHTML = "";
 }
 
-// ======== OTHER BUTTONS ========
-reportBtn.onclick = () => alert("Жалоба отправлена");
+// ===== OTHER BUTTONS =====
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
 
-// ======== PULL-TO-REFRESH ========
+// ===== 18+ REPORT MODERATION =====
+reportBtn.onclick = () => {
+  const reason = prompt("Причина жалобы:\n1 - Несовершеннолетний\n2 - Шок / насилие\n3 - Спам / реклама\n4 - Агрессия");
+  if(!reason) return;
+  let type = "";
+  switch(reason){
+    case "1": type="minor"; break;
+    case "2": type="violence"; break;
+    case "3": type="spam"; break;
+    case "4": type="aggression"; break;
+    default: return;
+  }
+  if(socket) socket.send(JSON.stringify({type:"report-user", reason:type, reportedUserId:currentPeerId}));
+  alert("Жалоба отправлена");
+};
+
+// ===== PULL-TO-REFRESH =====
 let touchStartY = 0;
 document.addEventListener('touchstart', e => { if(e.touches.length===1) touchStartY = e.touches[0].clientY; });
 document.addEventListener('touchmove', e => {
