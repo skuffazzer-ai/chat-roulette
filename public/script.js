@@ -23,7 +23,23 @@ const sendBtn = document.getElementById("sendBtn");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// ====== Показ всех кнопок ======
+// ====== Текстовая модерация ======
+const bannedWords = ["слово1","слово2","слово3"]; // сюда добавляем запрещённые слова
+
+function moderateMessage(msg) {
+  let moderated = msg;
+  let flagged = false;
+  bannedWords.forEach(word => {
+    const regex = new RegExp(word, "gi");
+    if (regex.test(moderated)) {
+      moderated = moderated.replace(regex, "***");
+      flagged = true;
+    }
+  });
+  return { moderated, flagged };
+}
+
+// ====== Показ кнопок ======
 function showAllButtons() {
   [stopBtn, nextBtn, flipBtn, micBtn, reportBtn, likeBtn, muteRemoteBtn, giftBtn].forEach(b => b.classList.remove("hidden"));
 }
@@ -89,7 +105,6 @@ function connectToServer() {
 // ====== Peer ======
 function createPeer(isCaller) {
   peer = new RTCPeerConnection(config);
-
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
 
   peer.ontrack = e => {
@@ -158,10 +173,21 @@ function appendMessage(sender, text) {
 }
 
 function sendMessage() {
-  const msg = chatInput.value.trim();
+  let msg = chatInput.value.trim();
   if (!msg) return;
-  appendMessage("Вы", msg);
-  if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "chat", message: msg }));
+
+  const { moderated, flagged } = moderateMessage(msg);
+
+  appendMessage("Вы", moderated);
+
+  if (flagged && socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "moderation_log", message: msg }));
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "chat", message: moderated }));
+  }
+
   chatInput.value = "";
 }
 sendBtn.onclick = sendMessage;
@@ -208,7 +234,12 @@ function closePeer() {
 }
 
 // ====== Другие кнопки ======
-reportBtn.onclick = () => alert("Жалоба отправлена");
+reportBtn.onclick = () => {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "report" }));
+  }
+  alert("Жалоба отправлена");
+};
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
 
@@ -218,3 +249,13 @@ let touchEndY = 0;
 document.addEventListener('touchstart', e => { if(e.touches.length===1) touchStartY = e.touches[0].clientY; });
 document.addEventListener('touchmove', e => { if(e.touches.length===1) touchEndY = e.touches[0].clientY; });
 document.addEventListener('touchend', e => { if (touchEndY - touchStartY > 150) location.reload(); });
+
+// ====== Фиксируем удалённого пользователя ======
+function stopRemote() {
+  if (remoteVideo.srcObject) {
+    remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+    remoteVideo.srcObject = null;
+  }
+  chatMessages.innerHTML = "";
+  if (peer) { peer.close(); peer = null; }
+}
