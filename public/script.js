@@ -30,23 +30,19 @@ function showAllButtons() {
 
 // ====== Получаем камеру и микрофон ======
 async function getCameraStream() {
-  if (localStream) localStream.getTracks().forEach(t => t.stop());
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: usingFrontCamera ? "user" : "environment" },
-      audio: true
-    });
-    localVideo.srcObject = localStream;
-    localVideo.muted = true; // локальное видео muted для autoplay
-    await localVideo.play();
-
-    // включаем аудио трек для надёжности
-    const audioTrack = localStream.getAudioTracks()[0];
-    if (audioTrack) audioTrack.enabled = true;
-
-  } catch (e) {
-    alert("Ошибка доступа к камере/микрофону. Разрешите доступ.");
-    throw e;
+  if (!localStream) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: usingFrontCamera ? "user" : "environment" },
+        audio: true
+      });
+      localVideo.srcObject = localStream;
+      localVideo.muted = true;
+      await localVideo.play();
+    } catch (e) {
+      alert("Ошибка доступа к камере/микрофону. Разрешите доступ.");
+      throw e;
+    }
   }
 }
 
@@ -55,6 +51,13 @@ startBtn.onclick = async () => {
   startBtn.classList.add("hidden");
   await getCameraStream();
   showAllButtons();
+  connectToServer();
+};
+
+// ====== Соединение с WebSocket и Peer ======
+function connectToServer() {
+  if (socket) socket.close();
+  if (peer) { peer.close(); peer = null; }
 
   socket = new WebSocket(location.protocol === "https:" ? `wss://${location.host}` : `ws://${location.host}`);
   socket.onmessage = async (event) => {
@@ -76,9 +79,13 @@ startBtn.onclick = async () => {
     }
 
     if (data.type === "chat") appendMessage("Собеседник", data.message);
-    if (data.type === "leave") stop();
+    if (data.type === "leave") stopRemote();
   };
-};
+
+  // очищаем предыдущий удалённый видео поток
+  remoteVideo.srcObject = null;
+  chatMessages.innerHTML = "";
+}
 
 // ====== Peer ======
 function createPeer(isCaller) {
@@ -88,11 +95,10 @@ function createPeer(isCaller) {
 
   peer.ontrack = e => {
     remoteVideo.srcObject = e.streams[0];
-    remoteVideo.muted = false; // звук включен
+    remoteVideo.muted = false;
     remoteVideo.volume = 1;
     remoteVideo.play().catch(err => console.log(err));
 
-    // включаем аудио трек удалённого потока на всякий случай
     const audioTrack = e.streams[0].getAudioTracks()[0];
     if (audioTrack) audioTrack.enabled = true;
   };
@@ -110,12 +116,20 @@ function createPeer(isCaller) {
 // ====== FLIP CAMERA ======
 flipBtn.onclick = async () => {
   usingFrontCamera = !usingFrontCamera;
-  await getCameraStream();
-
-  if (peer && localStream) {
+  if (localStream) {
     const videoTrack = localStream.getVideoTracks()[0];
-    const sender = peer.getSenders().find(s => s.track.kind === "video");
-    if (sender) sender.replaceTrack(videoTrack);
+    const constraints = { facingMode: usingFrontCamera ? "user" : "environment" };
+    const newStream = await navigator.mediaDevices.getUserMedia({ video: constraints, audio: true });
+    const newVideoTrack = newStream.getVideoTracks()[0];
+
+    localStream.removeTrack(videoTrack);
+    localStream.addTrack(newVideoTrack);
+    localVideo.srcObject = localStream;
+
+    if (peer) {
+      const sender = peer.getSenders().find(s => s.track.kind === "video");
+      if (sender) sender.replaceTrack(newVideoTrack);
+    }
   }
 };
 
@@ -162,12 +176,26 @@ function stop() {
 
   if (peer) { peer.close(); peer = null; }
   if (socket) { socket.close(); socket = null; }
-  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  localStream = null;
 
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
   chatMessages.innerHTML = "";
 }
+
+// ====== Следующий собеседник ======
+nextBtn.onclick = () => {
+  if (peer) { peer.close(); peer = null; }
+  if (socket) { socket.close(); socket = null; }
+
+  remoteVideo.srcObject = null;
+  chatMessages.innerHTML = "";
+
+  // переподключаем к новому пользователю
+  connectToServer();
+};
 
 // ====== Другие кнопки ======
 reportBtn.onclick = () => alert("Жалоба отправлена");
