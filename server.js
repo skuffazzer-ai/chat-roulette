@@ -1,5 +1,6 @@
 const express = require("express");
 const WebSocket = require("ws");
+const path = require("path");
 
 const app = express();
 app.use(express.static("public"));
@@ -29,7 +30,17 @@ wss.on("connection", (ws) => {
 
   ws.on("message", (msg) => {
     if (ws.partner) {
-      try{ ws.partner.send(msg.toString()); } catch(e){ console.log(e); }
+      try {
+        const data = JSON.parse(msg.toString());
+
+        if (data.type === "chat") {
+          ws.partner.send(JSON.stringify({ type: "chat", message: data.message }));
+        } else {
+          ws.partner.send(msg.toString());
+        }
+      } catch (e) {
+        console.log("Ошибка при обработке сообщения:", e);
+      }
     }
   });
 
