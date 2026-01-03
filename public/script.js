@@ -2,6 +2,7 @@ let localStream;
 let peer;
 let socket;
 let usingFrontCamera = true;
+let currentPeerId = null;
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
@@ -24,6 +25,8 @@ const sendBtn = document.getElementById("sendBtn");
 const ageGate = document.getElementById("ageGate");
 const confirmAgeBtn = document.getElementById("confirmAgeBtn");
 const mainContent = document.getElementById("mainContent");
+
+const reportModal = document.getElementById("reportModal");
 
 const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
@@ -87,7 +90,12 @@ startBtn.onclick = async () => {
   socket.onmessage = async (event) => {
     const data = JSON.parse(event.data);
 
-    if(data.type==="match") setTimeout(()=>createPeer(data.role==="caller"),100);
+    if(data.type==="match") {
+      setTimeout(()=>{
+        createPeer(data.role==="caller");
+        currentPeerId = socket.id; // для модалки
+      },100);
+    }
 
     if(data.sdp && peer){
       await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -105,6 +113,8 @@ startBtn.onclick = async () => {
     if(data.type==="chat") appendMessage("Собеседник", data.message);
 
     if(data.type==="leave") stop();
+    if(data.type==="force-disconnect") alert("Пользователь был отключен модерацией");
+    if(data.type==="banned") alert("Вы заблокированы");
   };
 };
 
@@ -180,25 +190,23 @@ function stop(){
   chatMessages.innerHTML = "";
 }
 
-// ===== OTHER BUTTONS =====
+// ===== LIKE / GIFT =====
 likeBtn.onclick = () => alert("Лайк поставлен");
 giftBtn.onclick = () => alert("Подарок отправлен");
 
-// ===== 18+ REPORT MODERATION =====
-reportBtn.onclick = () => {
-  const reason = prompt("Причина жалобы:\n1 - Несовершеннолетний\n2 - Шок / насилие\n3 - Спам / реклама\n4 - Агрессия");
-  if(!reason) return;
-  let type = "";
-  switch(reason){
-    case "1": type="minor"; break;
-    case "2": type="violence"; break;
-    case "3": type="spam"; break;
-    case "4": type="aggression"; break;
-    default: return;
-  }
-  if(socket) socket.send(JSON.stringify({type:"report-user", reason:type, reportedUserId:currentPeerId}));
-  alert("Жалоба отправлена");
-};
+// ===== REPORT MODAL =====
+reportBtn.onclick = () => reportModal.classList.remove("hidden");
+function closeReport() { reportModal.classList.add("hidden"); }
+function sendReport(reason){
+  if(!currentPeerId) return;
+  if(socket) socket.send(JSON.stringify({
+    type: "report-user",
+    reason,
+    reportedUserId: currentPeerId
+  }));
+  alert("Жалоба отправлена: " + reason);
+  closeReport();
+}
 
 // ===== PULL-TO-REFRESH =====
 let touchStartY = 0;
