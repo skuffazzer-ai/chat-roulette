@@ -1,30 +1,41 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Video Chat</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Chat Roulette</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-<div id="app">
 
-  <div id="videos">
-    <div class="video-box" id="localBox">
-      <video id="localVideo" autoplay muted playsinline></video>
-    </div>
-
-    <div class="video-box" id="remoteBox">
-      <video id="remoteVideo" autoplay playsinline></video>
+<div class="videos-container">
+  <div class="local-video-wrapper">
+    <video id="localVideo" autoplay muted playsinline></video>
+    <div class="controls">
+      <button id="flipBtn" class="hidden">🔄</button>
+      <button id="micBtn" class="hidden">🎤</button>
+      <button id="startBtn">▶️</button>
+      <button id="stopBtn" class="hidden">⏹️</button>
+      <button id="nextBtn" class="hidden">⏭️</button>
     </div>
   </div>
-
-  <div id="chat">
-    <div id="messages"></div>
-    <input id="chatInput" placeholder="Сообщение..." autocomplete="off">
+  <div class="remote-video-wrapper">
+    <video id="remoteVideo" autoplay playsinline></video>
+    <div class="remote-controls">
+      <button id="likeBtn" class="hidden">❤️</button>
+      <button id="muteRemoteBtn" class="hidden">🔇</button>
+      <button id="giftBtn" class="hidden">🎁</button>
+    </div>
   </div>
+</div>
 
+<div class="chat-container">
+  <div id="chatMessages" class="chat-messages"></div>
+</div>
+
+<div class="chat-input-fixed">
+  <input type="text" id="chatInput" placeholder="Напишите сообщение..." />
+  <button id="sendBtn">Отправить</button>
 </div>
 
 <script src="script.js"></script>
