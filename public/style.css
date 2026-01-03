@@ -49,6 +49,7 @@ body, html {
 #startBtn, #stopBtn, #nextBtn { bottom: 5px; right: 5px; }
 #nextBtn { right: 60px; }
 
+.remote-controls #reportBtn { top: 5px; right: 5px; }
 .remote-controls #muteRemoteBtn { top: 50px; right: 5px; }
 .remote-controls #likeBtn { top: 5px; left: 5px; }
 .remote-controls #giftBtn { bottom: 5px; left: 5px; }
