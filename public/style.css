@@ -80,6 +80,7 @@ body, html {
 .remote-controls #likeBtn { top: 5px; left: 5px; }
 .remote-controls #giftBtn { bottom: 5px; left: 5px; }
 
+/* Chat */
 .chat-container {
   height: 40vh;
   background: #222;
@@ -122,3 +123,33 @@ body, html {
   cursor: pointer;
 }
 .chat-input-fixed button:hover { background: #777; }
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+.modal-content {
+  background: #111;
+  padding: 20px;
+  border-radius: 10px;
+  width: 250px;
+  text-align: center;
+}
+.modal-content button {
+  display: block;
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #555;
+  color: white;
+}
+.modal-content button:hover { background: #777; }
